@@ -409,13 +409,13 @@ router.post('/auth/login', (req, res) => {
     cleanEmail === 'admin' ||
     (cleanEmail.includes('admin') && (password === 'admin123' || password === 'admin' || password === '123' || password === 'admin@123'))
   ) {
-    const user = { id: 'usr-admin', name: 'Gunashree Admin', email: cleanEmail || 'admin@vendom.com', role: 'admin' };
+    const user = { id: 'usr-admin', name: 'Kathir Sanjay', email: cleanEmail || 'admin@vendom.com', role: 'admin' };
     const token = jwt.sign(user, JWT_SECRET, { expiresIn: '7d' });
     return res.json({ token, user });
   }
 
   if (password === 'admin123' || !password) {
-    const user = { id: 'usr-admin', name: 'Gunashree Admin', email: cleanEmail, role: 'admin' };
+    const user = { id: 'usr-admin', name: 'Kathir Sanjay', email: cleanEmail, role: 'admin' };
     const token = jwt.sign(user, JWT_SECRET, { expiresIn: '7d' });
     return res.json({ token, user });
   }
@@ -424,7 +424,7 @@ router.post('/auth/login', (req, res) => {
 });
 
 router.get('/auth/me', (req, res) => {
-  const user = { id: 'usr-admin', name: 'Gunashree Admin', email: 'admin@vendom.com', role: 'admin' };
+  const user = { id: 'usr-admin', name: 'Kathir Sanjay', email: 'admin@vendom.com', role: 'admin' };
   res.json({ user });
 });
 
@@ -561,7 +561,7 @@ router.get('/activities', (_req, res) => res.json(activities));
 
 // Users
 router.get('/users', (_req, res) => res.json([
-  { id: '1', name: 'Gunashree Admin', email: 'admin@vendom.com', role: 'admin' },
+  { id: '1', name: 'Kathir Sanjay', email: 'admin@vendom.com', role: 'admin' },
   { id: '2', name: 'Priya Sharma', email: 'priya.sharma@vendom.com', role: 'admin' }
 ]));
 

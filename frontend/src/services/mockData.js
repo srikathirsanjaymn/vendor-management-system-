@@ -479,7 +479,7 @@ export const demoStore = {
   activities: [...initialActivities],
   currentUser: {
     id: 'usr-admin-demo',
-    name: 'Gunashree Admin',
+    name: 'Kathir Sanjay',
     email: 'admin@vendom.com',
     role: 'admin'
   }

@@ -177,7 +177,7 @@ function Login({ onLogin }) {
     localStorage.setItem('vendom_token', 'demo-jwt-token-active');
     onLogin({
       id: 'usr-admin-demo',
-      name: 'Gunashree Admin',
+      name: 'Kathir Sanjay',
       email: 'admin@vendom.com',
       role: 'admin'
     });
@@ -198,7 +198,7 @@ function Login({ onLogin }) {
       localStorage.setItem('vendom_token', data.token || 'demo-jwt-token-active');
       onLogin(data.user || {
         id: 'usr-admin-demo',
-        name: 'Gunashree Admin',
+        name: 'Kathir Sanjay',
         email: loginPayload.email,
         role: 'admin'
       });

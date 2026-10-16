@@ -166,7 +166,7 @@ function handleMockRequest(path, options = {}) {
   if (cleanPath === '/activities') return demoStore.activities;
   if (cleanPath === '/users') {
     return [
-      { id: '1', name: 'Gunashree Admin', email: 'admin@vendom.com', role: 'admin' },
+      { id: '1', name: 'Kathir Sanjay', email: 'admin@vendom.com', role: 'admin' },
       { id: '2', name: 'Priya Sharma', email: 'priya.sharma@vendom.com', role: 'admin' }
     ];
   }

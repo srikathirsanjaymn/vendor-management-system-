@@ -406,7 +406,7 @@ export async function seedAllData() {
 
   const demoUsers = [
     {
-      name: 'System Admin',
+      name: 'Kathir Sanjay',
       email: 'admin@vendom.com',
       password: adminPassword,
       role: 'admin'
