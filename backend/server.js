@@ -16,13 +16,23 @@ import Vendor from './models/Vendor.js';
 import { seedAllData } from './seed.js';
 
 const app = express();
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map((item) => item.trim())
+  : [];
+
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    if (/^http:\/\/localhost:\d+$/.test(origin) || /^http:\/\/127\.0\.0\.1:\d+$/.test(origin)) {
+    if (
+      /^http:\/\/localhost:\d+$/.test(origin) ||
+      /^http:\/\/127\.0\.0\.1:\d+$/.test(origin) ||
+      origin.endsWith('.vercel.app') ||
+      (process.env.CLIENT_URL && origin === process.env.CLIENT_URL) ||
+      allowedOrigins.includes(origin)
+    ) {
       return callback(null, true);
     }
-    return callback(new Error('CORS not allowed'));
+    return callback(new Error(`CORS not allowed for origin: ${origin}`));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
