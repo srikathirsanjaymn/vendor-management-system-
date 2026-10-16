@@ -17,6 +17,7 @@ import {
   FileCheck,
   FileText,
   Filter,
+  KeyRound,
   PackageSearch,
   Plus,
   Printer,
@@ -174,14 +175,30 @@ function Login({ onLogin }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const quickDemoLogin = () => {
-    localStorage.setItem('vendom_token', 'demo-jwt-token-active');
-    onLogin({
-      id: 'usr-admin-demo',
-      name: 'Kathir Sanjay',
-      email: 'admin@vendom.com',
-      role: 'admin'
-    });
+  const quickDemoLogin = (role = 'admin') => {
+    localStorage.setItem('vendom_token', role === 'vendor' ? 'demo-jwt-vendor-token' : 'demo-jwt-token-active');
+    if (role === 'vendor') {
+      onLogin({
+        _id: 'usr-vnd-001',
+        id: 'usr-vnd-001',
+        name: 'Rajesh Raman',
+        email: 'vendor@northstar.test',
+        role: 'vendor',
+        vendor: {
+          _id: 'vnd-001',
+          vendorId: 'VND-001',
+          vendorName: 'Northstar Supplies',
+          companyName: 'Northstar Supplies Ltd.'
+        }
+      });
+    } else {
+      onLogin({
+        id: 'usr-admin-demo',
+        name: 'Kathir Sanjay',
+        email: 'admin@vendom.com',
+        role: 'admin'
+      });
+    }
   };
 
   async function submit(event) {
@@ -197,18 +214,25 @@ function Login({ onLogin }) {
     try {
       const data = await api('/auth/login', { method: 'POST', body: JSON.stringify(loginPayload) });
       localStorage.setItem('vendom_token', data.token || 'demo-jwt-token-active');
-      onLogin(data.user || {
-        id: 'usr-admin-demo',
-        name: 'Kathir Sanjay',
-        email: loginPayload.email,
-        role: 'admin'
-      });
+      onLogin(
+        data.user || {
+          id: loginPayload.email.includes('vendor') ? 'usr-vnd-001' : 'usr-admin-demo',
+          name: loginPayload.email.includes('vendor') ? 'Rajesh Raman' : 'Kathir Sanjay',
+          email: loginPayload.email,
+          role: loginPayload.email.includes('vendor') ? 'vendor' : 'admin'
+        }
+      );
     } catch (e) {
-      setError(e.message || 'Login failed. Click "1-Click Instant Demo Login" below.');
+      setError(e.message || 'Login failed. Use demo login credentials or click a demo button below.');
     } finally {
       setLoading(false);
     }
   }
+
+  const fillCredentials = (email, password) => {
+    setForm({ email, password });
+    setError('');
+  };
 
   return (
     <main className="login-page">
@@ -229,7 +253,7 @@ function Login({ onLogin }) {
               type="text"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
-              placeholder="admin@vendom.com"
+              placeholder="admin@vendom.com or vendor@northstar.test"
               required
             />
           </label>
@@ -239,7 +263,7 @@ function Login({ onLogin }) {
               type="password"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
-              placeholder="admin123"
+              placeholder="admin123 or vendor123"
               required
             />
           </label>
@@ -253,29 +277,129 @@ function Login({ onLogin }) {
             {loading ? 'Signing in...' : 'Sign in to Console'} <ArrowRight size={17} />
           </button>
 
-          <button
-            type="button"
-            className="secondary-button full"
-            onClick={quickDemoLogin}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginTop: '0.75rem' }}>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => quickDemoLogin('admin')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.4rem',
+                background: '#ecfdf5',
+                borderColor: '#10b981',
+                color: '#065f46',
+                fontWeight: 600,
+                cursor: 'pointer',
+                padding: '0.6rem 0.5rem',
+                fontSize: '0.82rem',
+                borderRadius: '8px'
+              }}
+            >
+              <Sparkles size={15} color="#059669" /> Admin Demo
+            </button>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => quickDemoLogin('vendor')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.4rem',
+                background: '#eff6ff',
+                borderColor: '#3b82f6',
+                color: '#1e40af',
+                fontWeight: 600,
+                cursor: 'pointer',
+                padding: '0.6rem 0.5rem',
+                fontSize: '0.82rem',
+                borderRadius: '8px'
+              }}
+            >
+              <Store size={15} color="#2563eb" /> Vendor Demo
+            </button>
+          </div>
+
+          <div
             style={{
-              marginTop: '0.6rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem',
-              background: '#ecfdf5',
-              borderColor: '#10b981',
-              color: '#065f46',
-              fontWeight: 600,
-              cursor: 'pointer'
+              marginTop: '1rem',
+              padding: '0.75rem 0.85rem',
+              borderRadius: '8px',
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              fontSize: '0.8rem',
+              color: '#475569',
+              textAlign: 'left'
             }}
           >
-            <Sparkles size={16} color="#059669" /> 1-Click Instant Demo Login
-          </button>
-
-          <small className="hint" style={{ marginTop: '0.75rem', display: 'block', textAlign: 'center' }}>
-            Demo Account: <strong>admin@vendom.com</strong> &middot; Password: <strong>admin123</strong>
-          </small>
+            <div
+              style={{
+                fontWeight: 600,
+                color: '#0f172a',
+                marginBottom: '0.45rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem'
+              }}
+            >
+              <KeyRound size={14} color="#6366f1" /> Click to auto-fill credentials:
+            </div>
+            <div style={{ display: 'grid', gap: '0.35rem' }}>
+              <div
+                onClick={() => fillCredentials('admin@vendom.com', 'admin123')}
+                style={{
+                  cursor: 'pointer',
+                  padding: '3px 6px',
+                  borderRadius: '4px',
+                  background: '#fff',
+                  border: '1px solid #cbd5e1',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}
+                title="Click to fill Admin credentials"
+              >
+                <span>🛡️ <strong>Admin:</strong> admin@vendom.com</span>
+                <code style={{ fontSize: '11px', background: '#f1f5f9', padding: '1px 4px', borderRadius: '3px' }}>admin123</code>
+              </div>
+              <div
+                onClick={() => fillCredentials('vendor@northstar.test', 'vendor123')}
+                style={{
+                  cursor: 'pointer',
+                  padding: '3px 6px',
+                  borderRadius: '4px',
+                  background: '#fff',
+                  border: '1px solid #cbd5e1',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}
+                title="Click to fill Northstar Supplies vendor credentials"
+              >
+                <span>🏢 <strong>Vendor 1:</strong> vendor@northstar.test</span>
+                <code style={{ fontSize: '11px', background: '#f1f5f9', padding: '1px 4px', borderRadius: '3px' }}>vendor123</code>
+              </div>
+              <div
+                onClick={() => fillCredentials('tech@bluepeak.test', 'vendor123')}
+                style={{
+                  cursor: 'pointer',
+                  padding: '3px 6px',
+                  borderRadius: '4px',
+                  background: '#fff',
+                  border: '1px solid #cbd5e1',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}
+                title="Click to fill BluePeak Tech vendor credentials"
+              >
+                <span>💻 <strong>Vendor 2:</strong> tech@bluepeak.test</span>
+                <code style={{ fontSize: '11px', background: '#f1f5f9', padding: '1px 4px', borderRadius: '3px' }}>vendor123</code>
+              </div>
+            </div>
+          </div>
         </form>
       </div>
       <div className="login-aside">

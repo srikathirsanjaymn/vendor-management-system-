@@ -510,6 +510,78 @@ const initialActivities = [
   { _id: 'act-4', type: 'vendor', title: 'Compliance Audit Passed', description: 'Northstar Supplies passed ISO-9001 review', timestamp: new Date(Date.now() - 360 * 60000).toISOString() }
 ];
 
+export const initialUsers = [
+  {
+    _id: 'usr-admin-001',
+    id: 'usr-admin-001',
+    name: 'Kathir Sanjay',
+    email: 'admin@vendom.com',
+    role: 'admin',
+    vendor: null,
+    createdAt: '2024-01-01T00:00:00.000Z'
+  },
+  {
+    _id: 'usr-admin-002',
+    id: 'usr-admin-002',
+    name: 'Priya Sharma',
+    email: 'priya.sharma@vendom.com',
+    role: 'admin',
+    vendor: null,
+    createdAt: '2024-01-10T00:00:00.000Z'
+  },
+  {
+    _id: 'usr-admin-003',
+    id: 'usr-admin-003',
+    name: 'Arun Kumar',
+    email: 'arun.kumar@vendom.com',
+    role: 'admin',
+    vendor: null,
+    createdAt: '2024-01-15T00:00:00.000Z'
+  },
+  {
+    _id: 'usr-vnd-001',
+    id: 'usr-vnd-001',
+    name: 'Rajesh Raman',
+    email: 'vendor@northstar.test',
+    role: 'vendor',
+    vendor: {
+      _id: 'vnd-001',
+      vendorId: 'VND-001',
+      vendorName: 'Northstar Supplies',
+      companyName: 'Northstar Supplies Ltd.'
+    },
+    createdAt: '2024-02-01T00:00:00.000Z'
+  },
+  {
+    _id: 'usr-vnd-002',
+    id: 'usr-vnd-002',
+    name: 'Ananya Sharma',
+    email: 'tech@bluepeak.test',
+    role: 'vendor',
+    vendor: {
+      _id: 'vnd-002',
+      vendorId: 'VND-002',
+      vendorName: 'BluePeak Technologies',
+      companyName: 'BluePeak Technologies Pvt Ltd'
+    },
+    createdAt: '2024-02-05T00:00:00.000Z'
+  },
+  {
+    _id: 'usr-vnd-003',
+    id: 'usr-vnd-003',
+    name: 'Vikram Mehta',
+    email: 'dispatch@vertex.test',
+    role: 'vendor',
+    vendor: {
+      _id: 'vnd-004',
+      vendorId: 'VND-004',
+      vendorName: 'Vertex Logistics',
+      companyName: 'Vertex Logistics Corp'
+    },
+    createdAt: '2024-02-12T00:00:00.000Z'
+  }
+];
+
 export const demoStore = {
   vendors: [...initialVendors],
   contracts: [...initialContracts],
@@ -517,6 +589,7 @@ export const demoStore = {
   invoices: [...initialInvoices],
   products: [...initialProducts],
   activities: [...initialActivities],
+  users: [...initialUsers],
   currentUser: {
     id: 'usr-admin-demo',
     name: 'Kathir Sanjay',

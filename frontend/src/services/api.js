@@ -11,27 +11,122 @@ function handleMockRequest(path, options = {}) {
     const email = (body.email || '').trim().toLowerCase();
     const password = body.password || '';
 
-    // Allow demo admin login with standard or common inputs
+    // 1. Vendor Demo Accounts
+    if (
+      email === 'vendor@northstar.test' ||
+      email === 'vendor@northstar.com' ||
+      email === 'vendor@vendom.com' ||
+      email === 'vendor' ||
+      (email.includes('vendor') && (password === 'vendor123' || password === 'vendor' || password === '123' || password === 'admin123'))
+    ) {
+      const vendorUser = demoStore.users?.find((u) => u.email === 'vendor@northstar.test') || {
+        _id: 'usr-vnd-001',
+        id: 'usr-vnd-001',
+        name: 'Rajesh Raman',
+        email: email || 'vendor@northstar.test',
+        role: 'vendor',
+        vendor: {
+          _id: 'vnd-001',
+          vendorId: 'VND-001',
+          vendorName: 'Northstar Supplies',
+          companyName: 'Northstar Supplies Ltd.'
+        }
+      };
+      demoStore.currentUser = vendorUser;
+      return {
+        token: 'demo-jwt-vendor-token',
+        user: vendorUser
+      };
+    }
+
+    if (email === 'tech@bluepeak.test' || email === 'tech@bluepeak.com' || email.includes('bluepeak')) {
+      const vendorUser = demoStore.users?.find((u) => u.email === 'tech@bluepeak.test') || {
+        _id: 'usr-vnd-002',
+        id: 'usr-vnd-002',
+        name: 'Ananya Sharma',
+        email,
+        role: 'vendor',
+        vendor: {
+          _id: 'vnd-002',
+          vendorId: 'VND-002',
+          vendorName: 'BluePeak Technologies',
+          companyName: 'BluePeak Technologies Pvt Ltd'
+        }
+      };
+      demoStore.currentUser = vendorUser;
+      return {
+        token: 'demo-jwt-vendor-token',
+        user: vendorUser
+      };
+    }
+
+    if (email === 'dispatch@vertex.test' || email === 'dispatch@vertex.com' || email.includes('vertex')) {
+      const vendorUser = demoStore.users?.find((u) => u.email === 'dispatch@vertex.test') || {
+        _id: 'usr-vnd-003',
+        id: 'usr-vnd-003',
+        name: 'Vikram Mehta',
+        email,
+        role: 'vendor',
+        vendor: {
+          _id: 'vnd-004',
+          vendorId: 'VND-004',
+          vendorName: 'Vertex Logistics',
+          companyName: 'Vertex Logistics Corp'
+        }
+      };
+      demoStore.currentUser = vendorUser;
+      return {
+        token: 'demo-jwt-vendor-token',
+        user: vendorUser
+      };
+    }
+
+    // 2. Admin Demo Accounts
     if (
       email === 'admin@vendom.com' ||
       email === 'admin@123' ||
       email === 'admin' ||
       (email.includes('admin') && (password === 'admin123' || password === 'admin' || password === '123' || password === 'admin@123'))
     ) {
+      demoStore.currentUser = {
+        id: 'usr-admin-demo',
+        name: 'Kathir Sanjay',
+        email: email || 'admin@vendom.com',
+        role: 'admin'
+      };
       return {
         token: 'demo-jwt-token-active',
-        user: { ...demoStore.currentUser, email: email || 'admin@vendom.com' }
+        user: demoStore.currentUser
       };
     }
 
-    if (password === 'admin123' || !password) {
+    if (password === 'admin123' || password === 'vendor123' || !password) {
+      const isVendor = email.includes('vendor') || password === 'vendor123';
+      const role = isVendor ? 'vendor' : 'admin';
+      const user = {
+        id: isVendor ? 'usr-vnd-001' : 'usr-admin-demo',
+        name: isVendor ? 'Rajesh Raman' : 'Kathir Sanjay',
+        email,
+        role,
+        ...(isVendor
+          ? {
+              vendor: {
+                _id: 'vnd-001',
+                vendorId: 'VND-001',
+                vendorName: 'Northstar Supplies',
+                companyName: 'Northstar Supplies Ltd.'
+              }
+            }
+          : {})
+      };
+      demoStore.currentUser = user;
       return {
         token: 'demo-jwt-token-active',
-        user: { ...demoStore.currentUser, email }
+        user
       };
     }
 
-    throw new Error('Invalid email or password. Use demo login: admin@vendom.com / admin123');
+    throw new Error('Invalid email or password. Use demo login: admin@vendom.com / admin123 or vendor@northstar.test / vendor123');
   }
 
   if (cleanPath === '/auth/me') {
@@ -226,10 +321,41 @@ function handleMockRequest(path, options = {}) {
   if (cleanPath === '/products') return demoStore.products;
   if (cleanPath === '/activities') return demoStore.activities;
   if (cleanPath === '/users') {
-    return [
-      { id: '1', name: 'Kathir Sanjay', email: 'admin@vendom.com', role: 'admin' },
-      { id: '2', name: 'Priya Sharma', email: 'priya.sharma@vendom.com', role: 'admin' }
-    ];
+    if (method === 'POST') {
+      const body = typeof options.body === 'string' ? JSON.parse(options.body) : options.body;
+      const newU = {
+        _id: 'usr-' + Date.now(),
+        id: 'usr-' + Date.now(),
+        createdAt: new Date().toISOString(),
+        ...body
+      };
+      if (!demoStore.users) demoStore.users = [];
+      demoStore.users.unshift(newU);
+      return newU;
+    }
+    const search = (new URLSearchParams(path.split('?')[1] || '')).get('search') || '';
+    if (search) {
+      const q = search.toLowerCase();
+      return (demoStore.users || []).filter((u) => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
+    }
+    return demoStore.users || [];
+  }
+
+  if (cleanPath.startsWith('/users/')) {
+    const id = cleanPath.split('/')[2];
+    if (method === 'DELETE') {
+      demoStore.users = (demoStore.users || []).filter((u) => u._id !== id && u.id !== id);
+      return { success: true };
+    }
+    if (method === 'PUT') {
+      const body = typeof options.body === 'string' ? JSON.parse(options.body) : options.body;
+      const idx = (demoStore.users || []).findIndex((u) => u._id === id || u.id === id);
+      if (idx !== -1) {
+        demoStore.users[idx] = { ...demoStore.users[idx], ...body };
+        return demoStore.users[idx];
+      }
+    }
+    return (demoStore.users || []).find((u) => u._id === id || u.id === id) || (demoStore.users || [])[0];
   }
 
   return {};

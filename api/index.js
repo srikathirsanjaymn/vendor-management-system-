@@ -434,6 +434,78 @@ let activities = [
 // Router for all API routes
 const router = express.Router();
 
+let users = [
+  {
+    _id: 'usr-admin-001',
+    id: 'usr-admin-001',
+    name: 'Kathir Sanjay',
+    email: 'admin@vendom.com',
+    role: 'admin',
+    vendor: null,
+    createdAt: '2024-01-01T00:00:00.000Z'
+  },
+  {
+    _id: 'usr-admin-002',
+    id: 'usr-admin-002',
+    name: 'Priya Sharma',
+    email: 'priya.sharma@vendom.com',
+    role: 'admin',
+    vendor: null,
+    createdAt: '2024-01-10T00:00:00.000Z'
+  },
+  {
+    _id: 'usr-admin-003',
+    id: 'usr-admin-003',
+    name: 'Arun Kumar',
+    email: 'arun.kumar@vendom.com',
+    role: 'admin',
+    vendor: null,
+    createdAt: '2024-01-15T00:00:00.000Z'
+  },
+  {
+    _id: 'usr-vnd-001',
+    id: 'usr-vnd-001',
+    name: 'Rajesh Raman',
+    email: 'vendor@northstar.test',
+    role: 'vendor',
+    vendor: {
+      _id: 'vnd-001',
+      vendorId: 'VND-001',
+      vendorName: 'Northstar Supplies',
+      companyName: 'Northstar Supplies Ltd.'
+    },
+    createdAt: '2024-02-01T00:00:00.000Z'
+  },
+  {
+    _id: 'usr-vnd-002',
+    id: 'usr-vnd-002',
+    name: 'Ananya Sharma',
+    email: 'tech@bluepeak.test',
+    role: 'vendor',
+    vendor: {
+      _id: 'vnd-002',
+      vendorId: 'VND-002',
+      vendorName: 'BluePeak Technologies',
+      companyName: 'BluePeak Technologies Pvt Ltd'
+    },
+    createdAt: '2024-02-05T00:00:00.000Z'
+  },
+  {
+    _id: 'usr-vnd-003',
+    id: 'usr-vnd-003',
+    name: 'Vikram Mehta',
+    email: 'dispatch@vertex.test',
+    role: 'vendor',
+    vendor: {
+      _id: 'vnd-004',
+      vendorId: 'VND-004',
+      vendorName: 'Vertex Logistics',
+      companyName: 'Vertex Logistics Corp'
+    },
+    createdAt: '2024-02-12T00:00:00.000Z'
+  }
+];
+
 // Health check
 router.get('/health', (_req, res) => res.json({ status: 'ok', serverless: true, timestamp: new Date().toISOString() }));
 
@@ -442,29 +514,117 @@ router.post('/auth/login', (req, res) => {
   const { email, password } = req.body || {};
   const cleanEmail = (email || '').trim().toLowerCase();
 
-  // Accept admin credentials or demo login
+  // 1. Vendor Demo Accounts
+  if (
+    cleanEmail === 'vendor@northstar.test' ||
+    cleanEmail === 'vendor@northstar.com' ||
+    cleanEmail === 'vendor@vendom.com' ||
+    cleanEmail === 'vendor' ||
+    (cleanEmail.includes('vendor') && (password === 'vendor123' || password === 'vendor' || password === '123' || password === 'admin123'))
+  ) {
+    const user = users.find((u) => u.email === 'vendor@northstar.test') || {
+      _id: 'usr-vnd-001',
+      id: 'usr-vnd-001',
+      name: 'Rajesh Raman',
+      email: cleanEmail || 'vendor@northstar.test',
+      role: 'vendor',
+      vendor: {
+        _id: 'vnd-001',
+        vendorId: 'VND-001',
+        vendorName: 'Northstar Supplies',
+        companyName: 'Northstar Supplies Ltd.'
+      }
+    };
+    const token = jwt.sign(user, JWT_SECRET, { expiresIn: '7d' });
+    return res.json({ token, user });
+  }
+
+  if (cleanEmail === 'tech@bluepeak.test' || cleanEmail === 'tech@bluepeak.com' || cleanEmail.includes('bluepeak')) {
+    const user = users.find((u) => u.email === 'tech@bluepeak.test') || {
+      _id: 'usr-vnd-002',
+      id: 'usr-vnd-002',
+      name: 'Ananya Sharma',
+      email: cleanEmail,
+      role: 'vendor',
+      vendor: {
+        _id: 'vnd-002',
+        vendorId: 'VND-002',
+        vendorName: 'BluePeak Technologies',
+        companyName: 'BluePeak Technologies Pvt Ltd'
+      }
+    };
+    const token = jwt.sign(user, JWT_SECRET, { expiresIn: '7d' });
+    return res.json({ token, user });
+  }
+
+  if (cleanEmail === 'dispatch@vertex.test' || cleanEmail === 'dispatch@vertex.com' || cleanEmail.includes('vertex')) {
+    const user = users.find((u) => u.email === 'dispatch@vertex.test') || {
+      _id: 'usr-vnd-003',
+      id: 'usr-vnd-003',
+      name: 'Vikram Mehta',
+      email: cleanEmail,
+      role: 'vendor',
+      vendor: {
+        _id: 'vnd-004',
+        vendorId: 'VND-004',
+        vendorName: 'Vertex Logistics',
+        companyName: 'Vertex Logistics Corp'
+      }
+    };
+    const token = jwt.sign(user, JWT_SECRET, { expiresIn: '7d' });
+    return res.json({ token, user });
+  }
+
+  // 2. Admin Demo Accounts
   if (
     cleanEmail === 'admin@vendom.com' ||
     cleanEmail === 'admin@123' ||
     cleanEmail === 'admin' ||
     (cleanEmail.includes('admin') && (password === 'admin123' || password === 'admin' || password === '123' || password === 'admin@123'))
   ) {
-    const user = { id: 'usr-admin', name: 'Kathir Sanjay', email: cleanEmail || 'admin@vendom.com', role: 'admin' };
+    const user = { id: 'usr-admin-001', name: 'Kathir Sanjay', email: cleanEmail || 'admin@vendom.com', role: 'admin' };
     const token = jwt.sign(user, JWT_SECRET, { expiresIn: '7d' });
     return res.json({ token, user });
   }
 
-  if (password === 'admin123' || !password) {
-    const user = { id: 'usr-admin', name: 'Kathir Sanjay', email: cleanEmail, role: 'admin' };
+  if (password === 'admin123' || password === 'vendor123' || !password) {
+    const isVendor = cleanEmail.includes('vendor') || password === 'vendor123';
+    const role = isVendor ? 'vendor' : 'admin';
+    const user = {
+      id: isVendor ? 'usr-vnd-001' : 'usr-admin-001',
+      name: isVendor ? 'Rajesh Raman' : 'Kathir Sanjay',
+      email: cleanEmail,
+      role,
+      ...(isVendor
+        ? {
+            vendor: {
+              _id: 'vnd-001',
+              vendorId: 'VND-001',
+              vendorName: 'Northstar Supplies',
+              companyName: 'Northstar Supplies Ltd.'
+            }
+          }
+        : {})
+    };
     const token = jwt.sign(user, JWT_SECRET, { expiresIn: '7d' });
     return res.json({ token, user });
   }
 
-  res.status(401).json({ message: 'Invalid credentials. Use demo login: admin@vendom.com / admin123' });
+  res.status(401).json({ message: 'Invalid credentials. Use demo login: admin@vendom.com / admin123 or vendor@northstar.test / vendor123' });
 });
 
 router.get('/auth/me', (req, res) => {
-  const user = { id: 'usr-admin', name: 'Kathir Sanjay', email: 'admin@vendom.com', role: 'admin' };
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    try {
+      const decoded = jwt.verify(authHeader.split(' ')[1], JWT_SECRET);
+      if (decoded && decoded.email) {
+        const found = users.find((u) => u.email === decoded.email) || decoded;
+        return res.json({ user: found });
+      }
+    } catch (_e) {}
+  }
+  const user = { id: 'usr-admin-001', name: 'Kathir Sanjay', email: 'admin@vendom.com', role: 'admin' };
   res.json({ user });
 });
 
@@ -661,10 +821,43 @@ router.get('/products', (_req, res) => res.json(products));
 router.get('/activities', (_req, res) => res.json(activities));
 
 // Users
-router.get('/users', (_req, res) => res.json([
-  { id: '1', name: 'Kathir Sanjay', email: 'admin@vendom.com', role: 'admin' },
-  { id: '2', name: 'Priya Sharma', email: 'priya.sharma@vendom.com', role: 'admin' }
-]));
+router.get('/users', (req, res) => {
+  let result = [...users];
+  const { search, role } = req.query;
+  if (search) {
+    const q = search.toLowerCase();
+    result = result.filter((u) => (u.name || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q));
+  }
+  if (role && role !== 'All') {
+    result = result.filter((u) => u.role === role);
+  }
+  res.json(result);
+});
+
+router.post('/users', (req, res) => {
+  const newU = {
+    _id: 'usr-' + Date.now(),
+    id: 'usr-' + Date.now(),
+    createdAt: new Date().toISOString(),
+    ...req.body
+  };
+  users.unshift(newU);
+  res.status(201).json(newU);
+});
+
+router.put('/users/:id', (req, res) => {
+  const idx = users.findIndex((u) => u._id === req.params.id || u.id === req.params.id);
+  if (idx !== -1) {
+    users[idx] = { ...users[idx], ...req.body };
+    return res.json(users[idx]);
+  }
+  res.status(404).json({ message: 'User not found' });
+});
+
+router.delete('/users/:id', (req, res) => {
+  users = users.filter((u) => u._id !== req.params.id && u.id !== req.params.id);
+  res.json({ success: true });
+});
 
 // Mount router on both /api and / for resilient routing in Vercel
 app.use('/api', router);
