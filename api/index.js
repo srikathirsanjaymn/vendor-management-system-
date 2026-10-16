@@ -327,54 +327,94 @@ let orders = [
   }
 ];
 
-let invoices = [
-  {
-    _id: 'inv-001',
-    invoiceNumber: 'INV-2026-001',
-    order: orders[0],
-    vendor: vendors[0],
-    amount: 47500,
-    tax: 8550,
-    total: 56050,
-    status: 'Paid',
-    dueDate: '2026-02-15',
-    paidDate: '2026-02-10'
-  },
-  {
-    _id: 'inv-002',
-    invoiceNumber: 'INV-2026-002',
-    order: orders[1],
-    vendor: vendors[1],
-    amount: 92500,
-    tax: 16650,
-    total: 109150,
-    status: 'Paid',
-    dueDate: '2026-02-28',
-    paidDate: '2026-02-24'
-  },
-  {
-    _id: 'inv-003',
-    invoiceNumber: 'INV-2026-003',
-    order: orders[2],
-    vendor: vendors[3],
-    amount: 140000,
-    tax: 25200,
-    total: 165200,
-    status: 'Pending',
-    dueDate: '2026-03-15'
-  },
-  {
-    _id: 'inv-004',
-    invoiceNumber: 'INV-2026-004',
-    order: orders[3],
-    vendor: vendors[4],
-    amount: 168000,
-    tax: 30240,
-    total: 198240,
-    status: 'Overdue',
-    dueDate: '2026-02-01'
-  }
+const rawInvoiceConfigs = [
+  // 21 Paid
+  { id: 'INV-2001', vIdx: 0, po: 'PO-1026', cat: 'Office Supplies', amt: 42500, st: 'Paid', daysAgo: 50, note: 'Bulk A4 copier paper and desk stationery dispatch', method: 'NEFT / Bank Transfer' },
+  { id: 'INV-2002', vIdx: 1, po: 'PO-1027', cat: 'IT Services', amt: 37000, st: 'Paid', daysAgo: 45, note: 'Quarterly enterprise laptop diagnostics and thermal service', method: 'RTGS Transfer' },
+  { id: 'INV-2003', vIdx: 2, po: 'PO-1030', cat: 'Office Supplies', amt: 51200, st: 'Paid', daysAgo: 40, note: 'High-yield toner cartridges for corporate branch printers', method: 'Corporate Card' },
+  { id: 'INV-2004', vIdx: 3, po: 'PO-1033', cat: 'Logistics', amt: 126000, st: 'Paid', daysAgo: 38, note: 'Multi-state logistics freight haul and warehouse palleting', method: 'NEFT / Bank Transfer' },
+  { id: 'INV-2005', vIdx: 4, po: 'PO-1004', cat: 'Hardware', amt: 28400, st: 'Paid', daysAgo: 35, note: 'Network server rack rails and CAT-6 patch cords', method: 'RTGS Transfer' },
+  { id: 'INV-2006', vIdx: 5, po: 'PO-1034', cat: 'Facility Management', amt: 44000, st: 'Paid', daysAgo: 32, note: 'Corporate facility deep cleaning and HVAC filter change', method: 'NEFT / Bank Transfer' },
+  { id: 'INV-2007', vIdx: 6, po: 'PO-1031', cat: 'Software', amt: 95000, st: 'Paid', daysAgo: 30, note: 'Custom React & Node.js software sprint development milestone', method: 'RTGS Transfer' },
+  { id: 'INV-2008', vIdx: 7, po: 'PO-1032', cat: 'Security Services', amt: 75000, st: 'Paid', daysAgo: 28, note: 'Biometric gate access integration & security personnel deployment', method: 'NEFT / Bank Transfer' },
+  { id: 'INV-2009', vIdx: 8, po: 'PO-1036', cat: 'Manufacturing', amt: 82500, st: 'Paid', daysAgo: 25, note: 'Precision sheet metal brackets and custom CNC milling batch', method: 'RTGS Transfer' },
+  { id: 'INV-2010', vIdx: 9, po: 'PO-1028', cat: 'Cloud Services', amt: 90000, st: 'Paid', daysAgo: 22, note: 'Monthly Kubernetes cloud cluster hosting and disaster recovery', method: 'Corporate Card' },
+  { id: 'INV-2011', vIdx: 10, po: 'PO-1037', cat: 'Marketing', amt: 76200, st: 'Paid', daysAgo: 20, note: 'Corporate brand collateral, print banners, and UI design assets', method: 'NEFT / Bank Transfer' },
+  { id: 'INV-2012', vIdx: 11, po: 'PO-1029', cat: 'Consulting', amt: 64000, st: 'Paid', daysAgo: 18, note: 'Supply chain audit and ESG procurement compliance advisory', method: 'RTGS Transfer' },
+  { id: 'INV-2013', vIdx: 0, po: 'PO-1021', cat: 'Office Supplies', amt: 34000, st: 'Paid', daysAgo: 16, note: 'Executive meeting room stationery and whiteboard accessories', method: 'NEFT / Bank Transfer' },
+  { id: 'INV-2014', vIdx: 1, po: 'PO-1022', cat: 'IT Services', amt: 37000, st: 'Paid', daysAgo: 14, note: 'Workstation OS hardening and cybersecurity endpoint audit', method: 'RTGS Transfer' },
+  { id: 'INV-2015', vIdx: 2, po: 'PO-1023', cat: 'Office Supplies', amt: 64000, st: 'Paid', daysAgo: 12, note: 'Ergonomic lumbar support chairs and desk monitor arms', method: 'Corporate Card' },
+  { id: 'INV-2016', vIdx: 4, po: 'PO-1024', cat: 'Hardware', amt: 56800, st: 'Paid', daysAgo: 10, note: 'Gigabit PoE switches and wireless gateway controllers', method: 'NEFT / Bank Transfer' },
+  { id: 'INV-2017', vIdx: 6, po: 'PO-1012', cat: 'Software', amt: 95000, st: 'Paid', daysAgo: 8, note: 'Vendor portal API integration and automated webhook pipeline', method: 'RTGS Transfer' },
+  { id: 'INV-2018', vIdx: 7, po: 'PO-1013', cat: 'Security Services', amt: 75000, st: 'Paid', daysAgo: 6, note: 'Campus perimeter CCTV maintenance and guard patrol audit', method: 'NEFT / Bank Transfer' },
+  { id: 'INV-2019', vIdx: 9, po: 'PO-1009', cat: 'Cloud Services', amt: 45000, st: 'Paid', daysAgo: 5, note: 'Cloud database auto-scaling tier and automated snapshot service', method: 'Corporate Card' },
+  { id: 'INV-2020', vIdx: 10, po: 'PO-1025', cat: 'Marketing', amt: 84000, st: 'Paid', daysAgo: 4, note: 'Product release video promo production and digital exhibition deck', method: 'NEFT / Bank Transfer' },
+  { id: 'INV-2021', vIdx: 11, po: 'PO-1010', cat: 'Consulting', amt: 32000, st: 'Paid', daysAgo: 2, note: 'Quarterly vendor SLA performance scorecard review and benchmarking', method: 'RTGS Transfer' },
+
+  // 7 Pending
+  { id: 'INV-2022', vIdx: 0, po: 'PO-1001', cat: 'Office Supplies', amt: 17000, st: 'Pending', daysAhead: 15, note: 'A4 printing paper reams for accounting audit department', method: 'NEFT / Bank Transfer' },
+  { id: 'INV-2023', vIdx: 1, po: 'PO-1002', cat: 'IT Services', amt: 18500, st: 'Pending', daysAhead: 18, note: 'Field technician on-site network cabling maintenance', method: 'RTGS Transfer' },
+  { id: 'INV-2024', vIdx: 2, po: 'PO-1003', cat: 'Office Supplies', amt: 38400, st: 'Pending', daysAhead: 20, note: 'Eco-friendly office notebooks, markers, and archival boxes', method: 'Corporate Card' },
+  { id: 'INV-2025', vIdx: 3, po: 'PO-1005', cat: 'Logistics', amt: 84000, st: 'Pending', daysAhead: 22, note: 'Temperature-monitored refrigerated pharmaceutical freight', method: 'NEFT / Bank Transfer' },
+  { id: 'INV-2026', vIdx: 4, po: 'PO-1008', cat: 'Hardware', amt: 76200, st: 'Pending', daysAhead: 25, note: 'Core 10Gbps enterprise aggregation switch and SFP+ modules', method: 'RTGS Transfer' },
+  { id: 'INV-2027', vIdx: 5, po: 'PO-1014', cat: 'Facility Management', amt: 44000, st: 'Pending', daysAhead: 28, note: 'Quarterly pest control and washroom hygiene replenishment', method: 'NEFT / Bank Transfer' },
+  { id: 'INV-2028', vIdx: 8, po: 'PO-1007', cat: 'Manufacturing', amt: 33000, st: 'Pending', daysAhead: 30, note: 'Steel chassis covers and custom fabricated metal panels', method: 'RTGS Transfer' },
+
+  // 4 Overdue
+  { id: 'INV-2029', vIdx: 3, po: 'PO-1038', cat: 'Logistics', amt: 46500, st: 'Overdue', daysAgo: 22, note: 'Urgent weekend express courier dispatch across branches', method: 'NEFT / Bank Transfer' },
+  { id: 'INV-2030', vIdx: 7, po: 'PO-1041', cat: 'Security Services', amt: 65000, st: 'Overdue', daysAgo: 15, note: 'Visitor registration kiosk hardware and thermal scanner replacement', method: 'RTGS Transfer' },
+  { id: 'INV-2031', vIdx: 3, po: 'PO-1014', cat: 'Logistics', amt: 38000, st: 'Overdue', daysAgo: 12, note: 'Dedicated container haul from Chennai port to warehouse', method: 'Corporate Card' },
+  { id: 'INV-2032', vIdx: 5, po: 'PO-1015', cat: 'Facility Management', amt: 19500, st: 'Overdue', daysAgo: 9, note: 'Cafeteria sanitation audit and grease trap maintenance service', method: 'NEFT / Bank Transfer' },
+
+  // 3 Rejected
+  { id: 'INV-2033', vIdx: 4, po: 'PO-1042', cat: 'Hardware', amt: 168000, st: 'Rejected', daysAgo: 14, note: 'Disputed rate discrepancy for unapproved enterprise server parts', method: 'RTGS Transfer' },
+  { id: 'INV-2034', vIdx: 9, po: 'PO-1039', cat: 'Cloud Services', amt: 115000, st: 'Rejected', daysAgo: 18, note: 'Excess egress bandwidth charges disputed by infrastructure team', method: 'Corporate Card' },
+  { id: 'INV-2035', vIdx: 7, po: 'PO-1040', cat: 'Security Services', amt: 96000, st: 'Rejected', daysAgo: 25, note: 'Invoice rejected due to missing physical timesheets from security vendor', method: 'NEFT / Bank Transfer' }
 ];
+
+const nowTs = Date.now();
+let invoices = rawInvoiceConfigs.map((cfg, idx) => {
+  const v = vendors[cfg.vIdx % vendors.length];
+  const tax = Math.round(cfg.amt * 0.18);
+  const total = cfg.amt + tax;
+  let invDateStr, dueDateStr, paidDateStr;
+
+  if (cfg.daysAhead) {
+    const invD = new Date(nowTs - 5 * 86400000);
+    const dueD = new Date(nowTs + cfg.daysAhead * 86400000);
+    invDateStr = invD.toISOString().slice(0, 10);
+    dueDateStr = dueD.toISOString().slice(0, 10);
+  } else {
+    const dueD = new Date(nowTs - cfg.daysAgo * 86400000);
+    const invD = new Date(dueD.getTime() - 30 * 86400000);
+    invDateStr = invD.toISOString().slice(0, 10);
+    dueDateStr = dueD.toISOString().slice(0, 10);
+    if (cfg.st === 'Paid') {
+      const paidD = new Date(dueD.getTime() - 2 * 86400000);
+      paidDateStr = paidD.toISOString().slice(0, 10);
+    }
+  }
+
+  return {
+    _id: `inv-${2001 + idx}`,
+    invoiceNumber: cfg.id,
+    orderId: cfg.po,
+    vendor: v,
+    vendorId: v.vendorId,
+    vendorName: v.companyName,
+    category: cfg.cat || v.category,
+    amount: cfg.amt,
+    tax,
+    total,
+    paymentStatus: cfg.st,
+    status: cfg.st,
+    invoiceDate: invDateStr,
+    dueDate: dueDateStr,
+    paidDate: paidDateStr,
+    paymentMethod: cfg.method,
+    notes: cfg.note
+  };
+});
 
 const products = [
   { _id: 'p-01', productId: 'PRD-101', name: 'Office Stationery Package', category: 'Office Supplies', price: 8500, quantity: 120, vendor: vendors[0], status: 'Available' },
@@ -543,16 +583,77 @@ router.post('/orders', (req, res) => {
 });
 
 // Invoices
-router.get('/invoices', (_req, res) => res.json(invoices));
+router.get('/invoices', (req, res) => {
+  let result = [...invoices];
+  const { search, status } = req.query;
+  if (search) {
+    const q = search.toLowerCase();
+    result = result.filter(
+      (i) =>
+        (i.invoiceNumber || '').toLowerCase().includes(q) ||
+        (i.orderId || '').toLowerCase().includes(q) ||
+        (i.vendor?.companyName || i.vendorName || '').toLowerCase().includes(q)
+    );
+  }
+  if (status && status !== 'All') {
+    result = result.filter((i) => (i.paymentStatus || i.status) === status);
+  }
+  res.json(result);
+});
+
 router.post('/invoices', (req, res) => {
+  const amt = Number(req.body.amount) || 0;
+  const tax = Math.round(amt * 0.18);
   const newI = {
     _id: 'inv-' + Date.now(),
-    invoiceNumber: `INV-2026-00${invoices.length + 1}`,
-    status: 'Pending',
+    invoiceNumber: req.body.invoiceNumber || `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+    amount: amt,
+    tax,
+    total: amt + tax,
+    paymentStatus: req.body.paymentStatus || 'Pending',
+    status: req.body.paymentStatus || 'Pending',
+    invoiceDate: req.body.invoiceDate || new Date().toISOString().slice(0, 10),
+    dueDate: req.body.dueDate || new Date(Date.now() + 15 * 86400000).toISOString().slice(0, 10),
+    paymentMethod: req.body.paymentMethod || 'NEFT / Bank Transfer',
+    notes: req.body.notes || 'Vendor procurement milestone payment',
     ...req.body
   };
   invoices.unshift(newI);
   res.status(201).json(newI);
+});
+
+router.patch('/invoices/:id/status', (req, res) => {
+  const idx = invoices.findIndex((i) => i._id === req.params.id || i.invoiceNumber === req.params.id);
+  if (idx !== -1) {
+    const status = req.body.paymentStatus || req.body.status || 'Paid';
+    invoices[idx].paymentStatus = status;
+    invoices[idx].status = status;
+    if (status === 'Paid') invoices[idx].paidDate = new Date().toISOString().slice(0, 10);
+    return res.json(invoices[idx]);
+  }
+  res.status(404).json({ message: 'Invoice not found' });
+});
+
+router.put('/invoices/:id', (req, res) => {
+  const idx = invoices.findIndex((i) => i._id === req.params.id || i.invoiceNumber === req.params.id);
+  if (idx !== -1) {
+    const amt = Number(req.body.amount) || invoices[idx].amount;
+    const tax = Math.round(amt * 0.18);
+    invoices[idx] = {
+      ...invoices[idx],
+      ...req.body,
+      amount: amt,
+      tax,
+      total: amt + tax
+    };
+    return res.json(invoices[idx]);
+  }
+  res.status(404).json({ message: 'Invoice not found' });
+});
+
+router.delete('/invoices/:id', (req, res) => {
+  invoices = invoices.filter((i) => i._id !== req.params.id && i.invoiceNumber !== req.params.id);
+  res.json({ success: true });
 });
 
 // Products & Activities

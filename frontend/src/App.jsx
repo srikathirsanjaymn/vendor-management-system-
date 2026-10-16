@@ -12,6 +12,7 @@ import {
   Download,
   Edit3,
   ExternalLink,
+  Eye,
   FileBarChart,
   FileCheck,
   FileText,
@@ -1646,32 +1647,217 @@ function Contracts({ user }) {
 // 7. INVOICES PAGE
 // ==========================================
 const invoiceStatuses = ['Paid', 'Pending', 'Overdue', 'Approved', 'Rejected'];
+const invoiceCategories = [
+  'Office Supplies',
+  'IT Services',
+  'Cloud Services',
+  'Hardware',
+  'Logistics',
+  'Manufacturing',
+  'Consulting',
+  'Facility Management',
+  'Security Services',
+  'Marketing'
+];
+const paymentMethods = [
+  'NEFT / Bank Transfer',
+  'RTGS Transfer',
+  'Corporate Card',
+  'Cheque',
+  'UPI / IMPS'
+];
+
+function TaxInvoiceModal({ invoice, onClose, onMarkPaid, user }) {
+  if (!invoice) return null;
+  const v = invoice.vendor || {};
+  const baseAmt = Number(invoice.amount) || 0;
+  const taxAmt = Number(invoice.tax) || Math.round(baseAmt * 0.18);
+  const totalAmt = Number(invoice.total) || (baseAmt + taxAmt);
+  const cgst = Math.round(taxAmt / 2);
+  const sgst = taxAmt - cgst;
+
+  return (
+    <Modal title={`Tax Invoice — ${invoice.invoiceNumber}`} onClose={onClose}>
+      <div className="invoice-sheet" id="printable-invoice">
+        <div className="invoice-header-row">
+          <div>
+            <span className="eyebrow" style={{ color: '#167c69' }}>ORIGINAL FOR RECIPIENT</span>
+            <h2 className="invoice-title">TAX INVOICE</h2>
+            <div style={{ fontSize: '13px', color: '#687b76', marginTop: '4px' }}>
+              Invoice No: <strong>{invoice.invoiceNumber}</strong>
+            </div>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <span className={`status-pill ${(invoice.paymentStatus || invoice.status || 'Pending').toLowerCase()}`}>
+              <span></span>
+              {invoice.paymentStatus || invoice.status || 'Pending'}
+            </span>
+            <div style={{ fontSize: '12px', color: '#687b76', marginTop: '6px' }}>
+              Date: <strong>{invoice.invoiceDate ? new Date(invoice.invoiceDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '15 Jan 2026'}</strong>
+            </div>
+            <div style={{ fontSize: '12px', color: '#687b76' }}>
+              Due: <strong>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '15 Feb 2026'}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div className="invoice-parties">
+          <div>
+            <span style={{ fontSize: '11px', fontWeight: 700, color: '#889894', textTransform: 'uppercase' }}>Billed By (Vendor Partner)</span>
+            <h3 style={{ margin: '4px 0 2px', fontSize: '15px', color: '#1f3833' }}>{v.companyName || v.vendorName || invoice.vendorName || 'Enterprise Partner'}</h3>
+            <div style={{ fontSize: '12px', color: '#566b66', lineHeight: '1.5' }}>
+              <div><strong>Vendor Code:</strong> {v.vendorId || invoice.vendorId || 'VND-001'}</div>
+              <div><strong>GSTIN:</strong> {v.gstNumber || '33AABCN1234F1Z5'}</div>
+              <div>{v.address || 'Industrial Estate Road'}, {v.city || 'Bengaluru'}, {v.state || 'Karnataka'}</div>
+              <div>{v.email || 'billing@vendor.test'} &middot; {v.phone || '+91 98000 00000'}</div>
+            </div>
+          </div>
+
+          <div>
+            <span style={{ fontSize: '11px', fontWeight: 700, color: '#889894', textTransform: 'uppercase' }}>Billed To (Client Enterprise)</span>
+            <h3 style={{ margin: '4px 0 2px', fontSize: '15px', color: '#1f3833' }}>Vendom Enterprise Solutions Pvt. Ltd.</h3>
+            <div style={{ fontSize: '12px', color: '#566b66', lineHeight: '1.5' }}>
+              <div><strong>Client Account:</strong> VDM-CORP-HQ</div>
+              <div><strong>GSTIN:</strong> 29AABCV9999Z1Z5</div>
+              <div>100 Residency Road, Shanthala Nagar, Bengaluru, Karnataka - 560025</div>
+              <div>finance@vendom.com &middot; +91 80 4422 1100</div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', background: '#f5f8f7', padding: '10px 14px', borderRadius: '6px', marginBottom: '16px', fontSize: '12px' }}>
+          <div><span style={{ color: '#7a8e89' }}>PO Reference:</span><br /><strong>{invoice.orderId || 'PO-1026'}</strong></div>
+          <div><span style={{ color: '#7a8e89' }}>Expense Category:</span><br /><strong>{invoice.category || v.category || 'Office Supplies'}</strong></div>
+          <div><span style={{ color: '#7a8e89' }}>Payment Method:</span><br /><strong>{invoice.paymentMethod || 'NEFT / Bank Transfer'}</strong></div>
+          <div><span style={{ color: '#7a8e89' }}>Payment Terms:</span><br /><strong>Net 30 Days</strong></div>
+        </div>
+
+        <table className="invoice-table">
+          <thead>
+            <tr>
+              <th style={{ width: '45%' }}>Item Description & Deliverable</th>
+              <th style={{ textAlign: 'right' }}>Taxable Value</th>
+              <th style={{ textAlign: 'right' }}>CGST (9%)</th>
+              <th style={{ textAlign: 'right' }}>SGST (9%)</th>
+              <th style={{ textAlign: 'right' }}>Total (INR)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <strong>{invoice.notes || `${invoice.category || 'Procurement'} fulfillment under order ${invoice.orderId || 'PO-1026'}`}</strong>
+                <div style={{ fontSize: '11px', color: '#7d8e8a', marginTop: '2px' }}>
+                  HSN/SAC Code: 998313 &middot; Verified compliant delivery
+                </div>
+              </td>
+              <td style={{ textAlign: 'right' }}>{formatINR(baseAmt)}</td>
+              <td style={{ textAlign: 'right' }}>{formatINR(cgst)}</td>
+              <td style={{ textAlign: 'right' }}>{formatINR(sgst)}</td>
+              <td style={{ textAlign: 'right', fontWeight: 700 }}>{formatINR(totalAmt)}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: '10px' }}>
+          <div style={{ fontSize: '12px', color: '#687e79', maxWidth: '320px', lineHeight: '1.5' }}>
+            <span style={{ fontWeight: 700, color: '#27423d' }}>Settlement Bank Details:</span>
+            <div>Bank: HDFC Bank Ltd &middot; Corporate Current A/C</div>
+            <div>A/C No: 50200098412891 &middot; IFSC: HDFC0000128</div>
+            {invoice.paidDate && (
+              <div style={{ color: '#0f766e', marginTop: '4px', fontWeight: 600 }}>
+                ✓ Cleared on {new Date(invoice.paidDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+              </div>
+            )}
+          </div>
+
+          <div className="invoice-totals">
+            <div className="invoice-tax-row">
+              <span>Subtotal (Base Value):</span>
+              <strong>{formatINR(baseAmt)}</strong>
+            </div>
+            <div className="invoice-tax-row">
+              <span>Central GST (9%):</span>
+              <span>{formatINR(cgst)}</span>
+            </div>
+            <div className="invoice-tax-row">
+              <span>State GST (9%):</span>
+              <span>{formatINR(sgst)}</span>
+            </div>
+            <div className="invoice-tax-row total">
+              <span>Total Invoice Payable:</span>
+              <span style={{ color: '#167c69' }}>{formatINR(totalAmt)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #e5ece9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ fontSize: '11px', color: '#889894' }}>
+            Computer generated Tax Invoice &middot; Vendom Operations Console
+          </div>
+          <div className="form-actions" style={{ margin: 0 }}>
+            {invoice.paymentStatus !== 'Paid' && (
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => {
+                  onMarkPaid(invoice);
+                  onClose();
+                }}
+              >
+                <CreditCard size={15} /> Mark as Paid
+              </button>
+            )}
+            <button
+              type="button"
+              className="primary-button"
+              onClick={() => window.print()}
+            >
+              <Printer size={15} /> Print / Save PDF
+            </button>
+          </div>
+        </div>
+      </div>
+    </Modal>
+  );
+}
 
 function InvoiceForm({ initial, vendors, onSave, onClose }) {
   const [form, setForm] = useState({
-    invoiceNumber: initial.invoiceNumber || '',
+    invoiceNumber: initial.invoiceNumber || `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
     vendor: initial.vendor?._id || initial.vendor || vendors[0]?._id || '',
-    orderId: initial.orderId || '',
-    amount: initial.amount || '',
-    dueDate: initial.dueDate ? new Date(initial.dueDate).toISOString().split('T')[0] : new Date(Date.now() + 15 * 86400000).toISOString().split('T')[0],
-    paymentStatus: initial.paymentStatus || 'Pending'
+    orderId: initial.orderId || `PO-${Math.floor(1000 + Math.random() * 50)}`,
+    category: initial.category || 'Office Supplies',
+    amount: initial.amount || 45000,
+    invoiceDate: initial.invoiceDate ? new Date(initial.invoiceDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+    dueDate: initial.dueDate ? new Date(initial.dueDate).toISOString().split('T')[0] : new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
+    paymentStatus: initial.paymentStatus || initial.status || 'Pending',
+    paymentMethod: initial.paymentMethod || 'NEFT / Bank Transfer',
+    notes: initial.notes || ''
   });
 
   const change = (k, v) => setForm({ ...form, [k]: v });
+  const baseAmt = Number(form.amount) || 0;
+  const taxAmt = Math.round(baseAmt * 0.18);
+  const totalAmt = baseAmt + taxAmt;
+  const cgst = Math.round(taxAmt / 2);
+  const sgst = taxAmt - cgst;
 
   return (
     <form
       className="form-grid"
       onSubmit={(e) => {
         e.preventDefault();
-        const amt = Number(form.amount);
-        const tax = Math.round(amt * 0.18);
+        const selectedV = vendors.find((v) => v._id === form.vendor) || vendors[0];
         onSave({
           ...form,
-          amount: amt,
-          tax,
-          total: amt + tax,
-          dueDate: new Date(form.dueDate)
+          amount: baseAmt,
+          tax: taxAmt,
+          total: totalAmt,
+          vendor: selectedV,
+          vendorId: selectedV?.vendorId,
+          vendorName: selectedV?.companyName || selectedV?.vendorName,
+          dueDate: new Date(form.dueDate),
+          invoiceDate: new Date(form.invoiceDate)
         });
       }}
     >
@@ -1679,37 +1865,105 @@ function InvoiceForm({ initial, vendors, onSave, onClose }) {
         Invoice Number
         <input required value={form.invoiceNumber} onChange={(e) => change('invoiceNumber', e.target.value)} placeholder="e.g. INV-2036" />
       </label>
+
       <label>
-        Vendor
+        Vendor Partner
         <select value={form.vendor} onChange={(e) => change('vendor', e.target.value)} required>
           {vendors.map((v) => (
-            <option key={v._id} value={v._id}>{v.companyName}</option>
+            <option key={v._id} value={v._id}>
+              {v.companyName || v.vendorName} ({v.vendorId} &middot; {v.category})
+            </option>
           ))}
         </select>
       </label>
+
       <label>
         Purchase Order Reference
-        <input value={form.orderId} onChange={(e) => change('orderId', e.target.value)} placeholder="e.g. PO-1025" />
+        <input required value={form.orderId} onChange={(e) => change('orderId', e.target.value)} placeholder="e.g. PO-1025" />
       </label>
+
       <label>
-        Base Amount (₹)
-        <input type="number" min="0" required value={form.amount} onChange={(e) => change('amount', e.target.value)} placeholder="e.g. 50000" />
+        Expense Category
+        <select value={form.category} onChange={(e) => change('category', e.target.value)}>
+          {invoiceCategories.map((c) => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
       </label>
+
       <label>
-        Due Date
+        Invoice Issue Date
+        <input type="date" required value={form.invoiceDate} onChange={(e) => change('invoiceDate', e.target.value)} />
+      </label>
+
+      <label>
+        Payment Due Date
         <input type="date" required value={form.dueDate} onChange={(e) => change('dueDate', e.target.value)} />
       </label>
+
+      <label>
+        Base Taxable Amount (₹)
+        <input
+          type="number"
+          min="0"
+          step="100"
+          required
+          value={form.amount}
+          onChange={(e) => change('amount', e.target.value)}
+          placeholder="e.g. 50000"
+        />
+      </label>
+
+      <label>
+        Payment Method
+        <select value={form.paymentMethod} onChange={(e) => change('paymentMethod', e.target.value)}>
+          {paymentMethods.map((m) => (
+            <option key={m} value={m}>{m}</option>
+          ))}
+        </select>
+      </label>
+
       <label>
         Payment Status
         <select value={form.paymentStatus} onChange={(e) => change('paymentStatus', e.target.value)}>
           {invoiceStatuses.map((st) => (
-            <option key={st}>{st}</option>
+            <option key={st} value={st}>{st}</option>
           ))}
         </select>
       </label>
+
+      <div className="invoice-tax-box">
+        <div style={{ fontWeight: 700, marginBottom: '6px', color: '#167c69' }}>Statutory Tax Calculation (18% GST Breakdown):</div>
+        <div className="invoice-tax-row">
+          <span>Base Taxable Value:</span>
+          <span>{formatINR(baseAmt)}</span>
+        </div>
+        <div className="invoice-tax-row">
+          <span>Central GST (CGST @ 9%):</span>
+          <span>{formatINR(cgst)}</span>
+        </div>
+        <div className="invoice-tax-row">
+          <span>State GST (SGST @ 9%):</span>
+          <span>{formatINR(sgst)}</span>
+        </div>
+        <div className="invoice-tax-row total">
+          <span>Net Total Payable (Base + 18% GST):</span>
+          <span>{formatINR(totalAmt)}</span>
+        </div>
+      </div>
+
+      <label className="wide">
+        Item Description & Line Notes
+        <input
+          value={form.notes}
+          onChange={(e) => change('notes', e.target.value)}
+          placeholder="e.g. Quarterly stationery consignment delivered to Chennai office"
+        />
+      </label>
+
       <div className="form-actions">
         <button type="button" className="secondary-button" onClick={onClose}>Cancel</button>
-        <button className="primary-button">Save Invoice</button>
+        <button className="primary-button">Save & Issue Invoice</button>
       </div>
     </form>
   );
@@ -1721,6 +1975,7 @@ function Invoices({ user }) {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('All');
   const [modal, setModal] = useState(null);
+  const [previewInvoice, setPreviewInvoice] = useState(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const pageSize = 8;
@@ -1771,36 +2026,79 @@ function Invoices({ user }) {
     load();
   }
 
+  // Live KPI Metric Totals across all invoices
+  const totalBilled = useMemo(() => invoices.reduce((acc, i) => acc + (Number(i.total) || 0), 0), [invoices]);
+  const totalPaid = useMemo(() => invoices.filter((i) => (i.paymentStatus || i.status) === 'Paid').reduce((acc, i) => acc + (Number(i.total) || 0), 0), [invoices]);
+  const paidCount = useMemo(() => invoices.filter((i) => (i.paymentStatus || i.status) === 'Paid').length, [invoices]);
+  const totalPending = useMemo(() => invoices.filter((i) => (i.paymentStatus || i.status) === 'Pending').reduce((acc, i) => acc + (Number(i.total) || 0), 0), [invoices]);
+  const pendingCount = useMemo(() => invoices.filter((i) => (i.paymentStatus || i.status) === 'Pending').length, [invoices]);
+  const totalOverdue = useMemo(() => invoices.filter((i) => (i.paymentStatus || i.status) === 'Overdue').reduce((acc, i) => acc + (Number(i.total) || 0), 0), [invoices]);
+  const overdueCount = useMemo(() => invoices.filter((i) => (i.paymentStatus || i.status) === 'Overdue').length, [invoices]);
+
   const pagedInvoices = invoices.slice((page - 1) * pageSize, page * pageSize);
 
   return (
     <>
       <PageHeader
-        eyebrow="ACCOUNTS PAYABLE"
+        eyebrow="ACCOUNTS PAYABLE & BILLING"
         title="Invoices"
-        description="Vendor billing, GST reconciliation, milestone disbursement, and invoice settlements."
+        description="Enterprise vendor billing, GST breakdown, purchase order settlement, and milestone disbursements."
         action={
           user.role === 'admin' && (
             <button className="primary-button" onClick={() => setModal({ invoice: null })}>
-              <Plus size={17} /> Add Invoice
+              <Plus size={17} /> Create Invoice
             </button>
           )
         }
       />
 
+      {/* 4 Financial KPI Stat Cards */}
+      <div className="stats-grid" style={{ marginBottom: '20px' }}>
+        <StatCard
+          label="Total Billed Value"
+          value={formatShortINR(totalBilled)}
+          detail={`${invoices.length} invoices on file`}
+          tone="mint"
+          subPills={[`${invoices.length} Invoices`, '18% GST Compliant']}
+        />
+        <StatCard
+          label="Settled & Paid"
+          value={formatShortINR(totalPaid)}
+          detail={`${paidCount} payments cleared`}
+          tone="blue"
+          subPills={[`${paidCount} Paid`, 'Direct Transfer']}
+        />
+        <StatCard
+          label="Pending Processing"
+          value={formatShortINR(totalPending)}
+          detail={`${pendingCount} awaiting approval`}
+          tone="yellow"
+          subPills={[`${pendingCount} Pending`, 'Net 30 Terms']}
+        />
+        <StatCard
+          label="Overdue Invoices"
+          value={formatShortINR(totalOverdue)}
+          detail={`${overdueCount} requiring settlement`}
+          tone="coral"
+          subPills={[`${overdueCount} Overdue`, 'Action Required']}
+        />
+      </div>
+
       <div className="toolbar">
         <div className="search">
           <Search size={17} />
           <input
-            placeholder="Search invoice # or PO reference..."
+            placeholder="Search by invoice #, PO reference, or vendor..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
         <select value={status} onChange={(e) => setStatus(e.target.value)}>
-          <option value="All">All Payment Statuses</option>
+          <option value="All">All Payment Statuses ({invoices.length})</option>
           {invoiceStatuses.map((st) => (
-            <option key={st} value={st}>{st}</option>
+            <option key={st} value={st}>
+              {st} ({invoices.filter((i) => (i.paymentStatus || i.status) === st).length})
+            </option>
           ))}
         </select>
         <span className="filter-label">{invoices.length} invoices recorded</span>
@@ -1817,69 +2115,141 @@ function Invoices({ user }) {
       >
         <thead>
           <tr>
-            <th>Invoice Number</th>
-            <th>Vendor</th>
-            <th>PO Ref</th>
+            <th>Invoice # & Date</th>
+            <th>Vendor & GSTIN</th>
+            <th>PO Ref & Category</th>
             <th>Due Date</th>
-            <th>Tax (18% GST)</th>
-            <th>Total Amount</th>
+            <th>Base Taxable</th>
+            <th>GST (18%)</th>
+            <th>Net Total Amount</th>
             <th>Payment Status</th>
-            <th></th>
+            <th style={{ textAlign: 'right' }}>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {pagedInvoices.map((inv) => (
-            <tr key={inv._id}>
-              <td>
-                <strong>{inv.invoiceNumber}</strong>
-                <small>{new Date(inv.invoiceDate || inv.createdAt).toLocaleDateString()}</small>
-              </td>
-              <td>
-                <strong>{inv.vendor?.companyName || inv.vendor?.vendorName}</strong>
-                <small>{inv.vendor?.vendorId}</small>
-              </td>
-              <td>
-                <span style={{ fontWeight: 600, color: '#32524a' }}>{inv.orderId || '—'}</span>
-              </td>
-              <td>
-                <span className={inv.paymentStatus === 'Overdue' ? 'status-pill overdue' : ''}>
-                  {new Date(inv.dueDate).toLocaleDateString()}
-                </span>
-              </td>
-              <td>{formatINR(inv.tax)}</td>
-              <td>
-                <strong>{formatINR(inv.total)}</strong>
-              </td>
-              <td>
-                <span className={`status-pill ${inv.paymentStatus.toLowerCase()}`}>
-                  <span></span>
-                  {inv.paymentStatus}
-                </span>
-              </td>
-              <td className="row-actions">
-                {inv.paymentStatus !== 'Paid' && (
+          {pagedInvoices.map((inv) => {
+            const v = inv.vendor || {};
+            const invSt = inv.paymentStatus || inv.status || 'Pending';
+            const baseAmt = Number(inv.amount) || 0;
+            const taxAmt = Number(inv.tax) || Math.round(baseAmt * 0.18);
+            const totalAmt = Number(inv.total) || (baseAmt + taxAmt);
+            const isOverdue = invSt === 'Overdue';
+
+            return (
+              <tr key={inv._id}>
+                <td>
                   <button
-                    className="outline-button"
-                    style={{ padding: '4px 8px', fontSize: '11px', marginRight: '6px' }}
-                    onClick={() => markPaid(inv)}
-                    title="Mark as paid"
+                    className="text-button"
+                    style={{ fontWeight: 700, color: '#167c69', padding: 0, textDecoration: 'underline' }}
+                    onClick={() => setPreviewInvoice(inv)}
+                    title="Click to view full Tax Invoice"
                   >
-                    Pay
+                    {inv.invoiceNumber}
                   </button>
-                )}
-                {user.role === 'admin' && (
-                  <button className="icon-button danger" onClick={() => remove(inv)}>
-                    <Trash2 size={15} />
+                  <small style={{ display: 'block', color: '#7a8e89' }}>
+                    {inv.invoiceDate ? new Date(inv.invoiceDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '15 Jan 2026'}
+                  </small>
+                </td>
+                <td>
+                  <strong style={{ color: '#24413c' }}>{v.companyName || v.vendorName || inv.vendorName || 'Enterprise Vendor'}</strong>
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '2px' }}>
+                    <small style={{ color: '#566e67', fontWeight: 600 }}>{v.vendorId || inv.vendorId || 'VND-001'}</small>
+                    <small style={{ color: '#889e98' }}>&middot;</small>
+                    <small style={{ color: '#7a8e89', fontFamily: 'monospace' }}>{v.gstNumber || '33AABCN1234F1Z5'}</small>
+                  </div>
+                </td>
+                <td>
+                  <span className="badge-po">{inv.orderId || 'PO-1026'}</span>
+                  <div style={{ marginTop: '3px' }}>
+                    <span className="badge-cat">{inv.category || v.category || 'Office Supplies'}</span>
+                  </div>
+                </td>
+                <td>
+                  <span className={isOverdue ? 'status-pill overdue' : ''} style={{ fontSize: '12px' }}>
+                    {inv.dueDate ? new Date(inv.dueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '15 Feb 2026'}
+                  </span>
+                  {inv.paidDate && (
+                    <small style={{ display: 'block', color: '#0f766e', marginTop: '2px' }}>
+                      Paid on {new Date(inv.paidDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                    </small>
+                  )}
+                </td>
+                <td>
+                  <span style={{ color: '#38524d', fontWeight: 500 }}>{formatINR(baseAmt)}</span>
+                </td>
+                <td>
+                  <span style={{ color: '#667d77', fontSize: '12px' }}>{formatINR(taxAmt)}</span>
+                </td>
+                <td>
+                  <strong style={{ fontSize: '14px', color: '#167c69' }}>{formatINR(totalAmt)}</strong>
+                  <small style={{ display: 'block', color: '#889894', fontSize: '11px' }}>
+                    {inv.paymentMethod || 'NEFT / Bank Transfer'}
+                  </small>
+                </td>
+                <td>
+                  <span className={`status-pill ${invSt.toLowerCase()}`}>
+                    <span></span>
+                    {invSt}
+                  </span>
+                </td>
+                <td className="row-actions">
+                  <button
+                    className="icon-button"
+                    onClick={() => setPreviewInvoice(inv)}
+                    title="View & Print Tax Invoice"
+                    style={{ marginRight: '4px' }}
+                  >
+                    <Eye size={15} />
                   </button>
-                )}
-              </td>
-            </tr>
-          ))}
+                  {invSt !== 'Paid' && (
+                    <button
+                      className="outline-button"
+                      style={{ padding: '4px 8px', fontSize: '11px', marginRight: '4px', borderColor: '#167c69', color: '#167c69' }}
+                      onClick={() => markPaid(inv)}
+                      title="Mark as paid"
+                    >
+                      Pay
+                    </button>
+                  )}
+                  {user.role === 'admin' && (
+                    <>
+                      <button
+                        className="icon-button"
+                        onClick={() => setModal({ invoice: inv })}
+                        title="Edit Invoice"
+                        style={{ marginRight: '4px' }}
+                      >
+                        <Edit3 size={15} />
+                      </button>
+                      <button
+                        className="icon-button danger"
+                        onClick={() => remove(inv)}
+                        title="Delete Invoice"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </TableShell>
 
+      {/* Tax Invoice Preview Modal */}
+      {previewInvoice && (
+        <TaxInvoiceModal
+          invoice={previewInvoice}
+          onClose={() => setPreviewInvoice(null)}
+          onMarkPaid={markPaid}
+          user={user}
+        />
+      )}
+
+      {/* Add / Edit Invoice Modal */}
       {modal && (
-        <Modal title={modal.invoice ? 'Edit Invoice' : 'Create Vendor Invoice'} onClose={() => setModal(null)}>
+        <Modal title={modal.invoice ? 'Edit Vendor Invoice' : 'Create Vendor Tax Invoice'} onClose={() => setModal(null)}>
           <InvoiceForm
             initial={modal.invoice || {}}
             vendors={vendors}

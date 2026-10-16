@@ -150,16 +150,77 @@ function handleMockRequest(path, options = {}) {
   if (cleanPath === '/invoices') {
     if (method === 'POST') {
       const body = typeof options.body === 'string' ? JSON.parse(options.body) : options.body;
+      const amt = Number(body.amount) || 0;
+      const tax = Math.round(amt * 0.18);
       const newI = {
         _id: 'inv-' + Date.now(),
-        invoiceNumber: `INV-2026-00${demoStore.invoices.length + 1}`,
-        status: 'Pending',
+        invoiceNumber: body.invoiceNumber || `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+        amount: amt,
+        tax,
+        total: amt + tax,
+        paymentStatus: body.paymentStatus || 'Pending',
+        status: body.paymentStatus || 'Pending',
+        invoiceDate: body.invoiceDate || new Date().toISOString().slice(0, 10),
+        dueDate: body.dueDate || new Date(Date.now() + 15 * 86400000).toISOString().slice(0, 10),
+        paymentMethod: body.paymentMethod || 'NEFT / Bank Transfer',
+        notes: body.notes || 'Vendor procurement milestone payment',
         ...body
       };
       demoStore.invoices.unshift(newI);
       return newI;
     }
-    return demoStore.invoices;
+    const params = new URLSearchParams(path.split('?')[1] || '');
+    const search = (params.get('search') || '').toLowerCase();
+    const status = params.get('status');
+    let res = [...demoStore.invoices];
+    if (search) {
+      res = res.filter(
+        (i) =>
+          (i.invoiceNumber || '').toLowerCase().includes(search) ||
+          (i.orderId || '').toLowerCase().includes(search) ||
+          (i.vendor?.companyName || i.vendorName || '').toLowerCase().includes(search)
+      );
+    }
+    if (status && status !== 'All') {
+      res = res.filter((i) => (i.paymentStatus || i.status) === status);
+    }
+    return res;
+  }
+
+  if (cleanPath.startsWith('/invoices/')) {
+    const id = cleanPath.split('/')[2];
+    if (cleanPath.endsWith('/status') && method === 'PATCH') {
+      const body = typeof options.body === 'string' ? JSON.parse(options.body) : options.body;
+      const idx = demoStore.invoices.findIndex((i) => i._id === id || i.invoiceNumber === id);
+      if (idx !== -1) {
+        const status = body.paymentStatus || body.status || 'Paid';
+        demoStore.invoices[idx].paymentStatus = status;
+        demoStore.invoices[idx].status = status;
+        if (status === 'Paid') demoStore.invoices[idx].paidDate = new Date().toISOString().slice(0, 10);
+        return demoStore.invoices[idx];
+      }
+    }
+    if (method === 'DELETE') {
+      demoStore.invoices = demoStore.invoices.filter((i) => i._id !== id && i.invoiceNumber !== id);
+      return { success: true };
+    }
+    if (method === 'PUT' || method === 'PATCH') {
+      const body = typeof options.body === 'string' ? JSON.parse(options.body) : options.body;
+      const idx = demoStore.invoices.findIndex((i) => i._id === id || i.invoiceNumber === id);
+      if (idx !== -1) {
+        const amt = Number(body.amount) || demoStore.invoices[idx].amount;
+        const tax = Math.round(amt * 0.18);
+        demoStore.invoices[idx] = {
+          ...demoStore.invoices[idx],
+          ...body,
+          amount: amt,
+          tax,
+          total: amt + tax
+        };
+        return demoStore.invoices[idx];
+      }
+    }
+    return demoStore.invoices.find((i) => i._id === id || i.invoiceNumber === id) || demoStore.invoices[0];
   }
 
   if (cleanPath === '/products') return demoStore.products;
