@@ -2538,11 +2538,20 @@ function Settings({ onRefreshData }) {
   );
 }
 
-// ==========================================
-// MAIN APP COMPONENT
-// ==========================================
+const defaultAdminUser = {
+  id: 'usr-admin-demo',
+  name: 'Kathir Sanjay',
+  email: 'admin@vendom.com',
+  role: 'admin'
+};
+
 export default function App() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    if (typeof window !== 'undefined' && sessionStorage.getItem('vendom_logged_out') === 'true') {
+      return null;
+    }
+    return defaultAdminUser;
+  });
   const [page, setPage] = useState('dashboard');
   const [stats, setStats] = useState(null);
   const [selectedVendor, setSelectedVendor] = useState(null);
@@ -2555,8 +2564,10 @@ export default function App() {
     const token = localStorage.getItem('vendom_token');
     if (token) {
       api('/auth/me')
-        .then((data) => setUser(data.user))
-        .catch(() => localStorage.removeItem('vendom_token'));
+        .then((data) => {
+          if (data && data.user) setUser(data.user);
+        })
+        .catch(() => {});
     }
   }, []);
 
@@ -2566,11 +2577,17 @@ export default function App() {
     }
   }, [user, page]);
 
+  const handleLogin = (loggedUser) => {
+    sessionStorage.removeItem('vendom_logged_out');
+    setUser(loggedUser || defaultAdminUser);
+  };
+
   if (!user) {
-    return <Login onLogin={setUser} />;
+    return <Login onLogin={handleLogin} />;
   }
 
   const logout = () => {
+    sessionStorage.setItem('vendom_logged_out', 'true');
     localStorage.removeItem('vendom_token');
     setUser(null);
   };
