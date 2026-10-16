@@ -1,305 +1,397 @@
-# Vendom Vendor Management System
+# Vendom — Enterprise Vendor Management System (VMS)
 
-Vendom is a small full-stack Vendor Management System created for a college Full Stack Development project. It gives an organization one place to manage vendors, products or services, and orders.
+[![React](https://img.shields.io/badge/Frontend-React%2019%20%2B%20Vite-61dafb?logo=react&logoColor=black)](https://react.dev/)
+[![Node.js](https://img.shields.io/badge/Backend-Node.js%20%2B%20Express-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![MongoDB](https://img.shields.io/badge/Database-MongoDB%20%2F%20In--Memory-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-This README is written for someone who has never run this project before. Follow the sections in order.
+**Vendom** is a modern, full-stack **Vendor Management System** designed to streamline procurement, vendor relationship management (VRM), contract tracking, order fulfillment, and invoicing in one centralized dashboard.
 
-## 1. What The Application Does
+Built with a responsive, high-performance **MERN** architecture (MongoDB, Express, React, Node.js), Vendom features **Zero-Configuration Startup** with automatic in-memory database fallback and pre-seeded demo records for hassle-free demonstration.
 
-The application has two types of users:
+---
 
-- **Admin:** manages all vendors, products, and orders.
-- **Vendor:** manages their own products and services, views their own orders, and updates the relevant order status.
+## Table of Contents
 
-The main screens are:
+- [1. Key Features & Modules](#1-key-features--modules)
+- [2. System Architecture](#2-system-architecture)
+- [3. Tech Stack](#3-tech-stack)
+- [4. Project Structure](#4-project-structure)
+- [5. Getting Started & Installation](#5-getting-started--installation)
+  - [Prerequisites](#prerequisites)
+  - [One-Click Launch (Windows)](#one-click-launch-windows)
+  - [Standard Setup (npm)](#standard-setup-npm)
+- [6. Environment Configuration](#6-environment-configuration)
+- [7. Default Demo Accounts](#7-default-demo-accounts)
+- [8. System Workflow & User Roles](#8-system-workflow--user-roles)
+- [9. API Reference](#9-api-reference)
+- [10. Data Models & Schemas](#10-data-models--schemas)
+- [11. Common Troubleshooting](#11-common-troubleshooting)
 
-- **Login:** authenticates an admin or vendor.
-- **Dashboard:** displays vendor, product, and order totals.
-- **Vendors:** lets an admin add, edit, search, filter, activate, deactivate, and delete vendors. Selecting a vendor opens a profile with its products and orders.
-- **Products & services:** lets users add, edit, search, and delete catalogue items. Products are connected to vendors using MongoDB references.
-- **Orders:** lets an admin create and manage orders. Vendors can view their own orders and update their status.
+---
 
-Inactive vendors cannot receive new orders.
+## 1. Key Features & Modules
 
-## 2. Technologies Used
+### 🏢 Vendor Directory & Lifecycle
+- Comprehensive vendor profiles including GST numbers, city, state, contact person, phone, and services.
+- Search, filter by category (e.g., *IT Services, Office Supplies, Logistics*), and filter by status (*Active, Inactive, Pending*).
+- Status toggling with automated business guardrails (e.g., inactive vendors cannot be assigned new orders).
 
-### Frontend
+### 📊 Real-Time Operations Dashboard
+- Live KPI cards: Total Vendors, Active Vendors, Total Products, Open Orders, and Pending Approval volume.
+- Spend analytics, recent audit activity feeds, and quick navigation shortcuts.
+- **Reset Demo Data** button to quickly restore sample records for testing or presentations.
 
-- React: builds the browser interface.
-- Vite: runs the frontend development server and creates production builds.
-- Lucide React: provides interface icons.
-- CSS: provides the responsive layout and visual styling.
+### 📦 Products & Services Catalog
+- Manage company procurement items and vendor-offered services with unit pricing in Indian Rupees (₹ INR).
+- Category classification, stock inventory levels, and direct vendor association.
 
-### Backend
+### 📋 Purchase Order (PO) Management
+- End-to-end purchase order lifecycle tracking:
+  $$\text{Pending} \longrightarrow \text{Approved} \longrightarrow \text{In Progress} \longrightarrow \text{Completed / Cancelled}$$
+- Line item calculation, automated stock validation, delivery dates, and printable purchase order receipts.
 
-- Node.js: runs JavaScript outside the browser.
-- Express: creates the REST API and HTTP routes.
-- Mongoose: connects the backend to MongoDB and defines database models.
-- JSON Web Tokens (JWT): protects authenticated API requests.
-- bcryptjs: hashes passwords instead of storing plain-text passwords.
+### 📑 Contract & SLA Management
+- Legal agreements and vendor contract repository.
+- Contract start/end dates, total contract valuation (₹ INR), terms documentation, and real-time status tracking (*Active, Expired, Pending*).
 
-### Database
+### 🧾 Invoicing & Accounts Payable
+- Invoice generation mapped to vendors and purchase orders.
+- Billing amounts, payment due date tracking, and status monitoring (*Paid, Pending, Overdue*).
 
-- MongoDB stores application data.
-- The main collections are `users`, `vendors`, `products`, and `orders`.
-- Products reference a vendor, and orders reference both a vendor and a product using MongoDB ObjectIds.
+### ⭐ 6-Dimension Performance Scorecard
+- Multi-metric vendor ratings evaluating:
+  - **Quality**
+  - **Delivery Timeliness**
+  - **Pricing Competitiveness**
+  - **Communication**
+  - **Reliability**
+  - **Compliance**
+- Automated calculation of overall star ratings (1.0 – 5.0) with visual scorecards.
 
-## 3. Requirements
+### 👥 User Administration & Role-Based Access Control (RBAC)
+- **Admin Role:** Full administrative access across all records, configuration, order approvals, and user accounts.
+- **Vendor Role:** Restricted access allowing vendors to manage only their own products/services, view their assigned orders, and update order statuses.
 
-Install these tools before starting:
+### ⚡ Built-in Zero-Config In-Memory Database
+- Automatically detects if local MongoDB is running. If not detected, seamlessly launches an embedded **MongoMemoryServer** and seeds 20 realistic vendor companies, users, products, contracts, and invoices automatically.
 
-1. **Node.js:** install the current LTS version from the official Node.js website. Verify it with:
+---
 
-	```powershell
-	node --version
-	npm --version
-	```
-
-2. **MongoDB Community Server:** install it from the official MongoDB website. During installation, install MongoDB as a Windows service. MongoDB must be running before the backend can connect.
-
-3. **VS Code:** recommended for opening and running the project.
-
-Do not install packages or tools from unknown websites. Review `package.json` files before installing dependencies.
-
-## 4. Project Layout
-
-```text
-Vendom Management System/
-|-- backend/
-|   |-- config/              Configuration directory reserved for database setup
-|   |-- middleware/          Authentication and role checks
-|   |-- models/              Mongoose database models
-|   |-- routes/              REST API route handlers
-|   |-- .env.example         Backend environment variable template
-|   |-- package.json         Backend dependencies and scripts
-|   |-- server.js            Express server entry point
-|-- frontend/
-|   |-- src/
-|       |-- components/      Reusable React components
-|       |-- services/        Frontend API helper
-|       |-- App.jsx          Main application screens and behavior
-|       |-- main.jsx         React entry point
-|       |-- styles.css       Application styling
-|   |-- package.json         Frontend dependencies and scripts
-|   |-- vite.config.js       Vite configuration
-|-- package.json             Root scripts for running both applications
-|-- README.md                This guide
-|-- .gitignore               Files that should not be committed
-```
-
-## 5. Configure MongoDB
-
-The application expects a local MongoDB database at:
+## 2. System Architecture
 
 ```text
-mongodb://127.0.0.1:27017/vendor-management
+┌────────────────────────────────────────────────────────┐
+│                   React 19 Frontend                    │
+│      (Vite, Lucide Icons, Responsive CSS Layout)       │
+└───────────────────────────┬────────────────────────────┘
+                            │ REST API (JSON / JWT)
+                            ▼
+┌────────────────────────────────────────────────────────┐
+│                   Express.js Backend                   │
+│        (Node.js, JWT Auth, Role-Based Middleware)      │
+└───────────────────────────┬────────────────────────────┘
+                            │ Mongoose ODM
+                            ▼
+        ┌───────────────────┴───────────────────┐
+        ▼                                       ▼
+┌───────────────────────┐             ┌──────────────────────┐
+│  Local MongoDB Server │   Fallback  │ Embedded In-Memory   │
+│  (127.0.0.1:27017)    │ ──────────> │ MongoDB Database     │
+└───────────────────────┘             └──────────────────────┘
 ```
 
-The database does not need to be created manually. MongoDB creates the database when the application first writes data.
+---
 
-On Windows, check and start the MongoDB service in PowerShell:
+## 3. Tech Stack
+
+| Layer | Technology | Details |
+|---|---|---|
+| **Frontend** | React 19, Vite 6 | Fast SPA rendering and modern hooks architecture |
+| **Icons & UI** | Lucide React | Clean, professional SVG interface icons |
+| **Styling** | Vanilla CSS3 | Custom responsive design system with dark/light tones |
+| **Backend** | Node.js, Express.js (v4) | RESTful API server with modular routing |
+| **Database** | MongoDB / Mongoose (v8) | Document-oriented database with schema validation |
+| **Fallback DB** | MongoMemoryServer (v11) | In-memory ephemeral DB for zero-dependency demos |
+| **Security** | JWT, bcryptjs, CORS | Bearer token authentication & hashed passwords |
+| **Process Runner**| Concurrently | Runs both backend and frontend servers simultaneously |
+
+---
+
+## 4. Project Structure
+
+```text
+Vendor-Management-System/
+├── package.json                 # Top-level workspace dependencies & dev runner
+├── README.md                    # Project documentation (this file)
+├── backend/
+│   ├── models/                  # Mongoose data schemas
+│   │   ├── Activity.js          # Audit activity trail
+│   │   ├── Contract.js          # Vendor legal contracts
+│   │   ├── Invoice.js           # Billing and payment records
+│   │   ├── Order.js             # Purchase orders
+│   │   ├── Product.js           # Catalog items & services
+│   │   ├── User.js              # Admin & Vendor users
+│   │   └── Vendor.js            # Vendor profiles & ratings
+│   ├── routes/                  # Express REST API endpoints
+│   │   ├── activities.js        # /api/activities
+│   │   ├── auth.js              # /api/auth
+│   │   ├── contracts.js         # /api/contracts
+│   │   ├── dashboard.js         # /api/dashboard
+│   │   ├── invoices.js          # /api/invoices
+│   │   ├── orders.js            # /api/orders
+│   │   ├── products.js          # /api/products
+│   │   ├── users.js             # /api/users
+│   │   └── vendors.js           # /api/vendors
+│   ├── middleware/              # Auth & role verification middleware
+│   ├── seed.js                  # Automated 20-vendor demo database seeder
+│   ├── server.js                # Express server entry point & DB fallback
+│   ├── .env                     # Backend environment configuration
+│   └── package.json             # Backend dependencies & npm scripts
+└── frontend/
+    ├── src/
+    │   ├── components/
+    │   │   └── Sidebar.jsx      # Navigation sidebar with role indicator
+    │   ├── services/
+    │   │   └── api.js           # Centralized API fetch helper
+    │   ├── App.jsx              # Application pages, modals & state
+    │   ├── main.jsx             # React DOM root entry
+    │   ├── styles.css           # Global design system & component styles
+    │   └── utils.js             # Currency formatting (INR) & utilities
+    ├── index.html               # Frontend HTML template
+    ├── vite.config.js           # Vite configuration
+    └── package.json             # Frontend dependencies & scripts
+```
+
+---
+
+## 5. Getting Started & Installation
+
+### Prerequisites
+- **Node.js**: v18.0.0 or higher ([Download Node.js](https://nodejs.org/))
+- **MongoDB** *(Optional)*: Community Server running locally. If not installed or running, the system will seamlessly run via its built-in in-memory database!
+
+---
+
+### One-Click Launch (Windows)
+
+From the project root directory, double-click or run:
 
 ```powershell
-Get-Service MongoDB
-Start-Service MongoDB
+..\run.bat
 ```
 
-The service should show `Running`. If PowerShell says the service does not exist, MongoDB Community Server is either not installed or was installed without the Windows service option.
+---
 
-## 6. Configure Backend Environment Variables
+### Standard Setup (npm)
 
-From the project root, copy the example environment file:
+1. **Install all dependencies** across root, backend, and frontend:
+   ```bash
+   npm run install:all
+   ```
 
-```powershell
-Copy-Item backend\.env.example backend\.env
-```
+2. **Start the application** in development mode:
+   ```bash
+   npm run dev
+   ```
 
-Open `backend/.env` and set values similar to these:
+3. **Access the application**:
+   - **Frontend App:** [http://localhost:5173](http://localhost:5173)
+   - **Backend API:** [http://localhost:5000](http://localhost:5000)
+   - **API Health Check:** [http://localhost:5000/api/health](http://localhost:5000/api/health)
 
-```env
-PORT=5000
-MONGO_URI=mongodb://127.0.0.1:27017/vendor-management
-JWT_SECRET=use-a-long-private-random-string-here
-CLIENT_URL=http://localhost:5173
-```
-
-What each setting means:
-
-- `PORT`: port used by the Express API.
-- `MONGO_URI`: address of the MongoDB database.
-- `JWT_SECRET`: private value used to sign login tokens. Do not share it or commit it to Git.
-- `CLIENT_URL`: address allowed to communicate with the API from the browser.
-
-The `.env` file is ignored by Git. The example file is safe to share; the real `.env` file is private.
-
-## 7. Install Dependencies Safely
-
-The project has three dependency manifests: one in the root, one in `backend`, and one in `frontend`.
-
-Install the already-declared packages with lifecycle scripts disabled:
-
-```powershell
-npm install --ignore-scripts --no-audit --no-fund
-npm install --prefix backend --ignore-scripts --no-audit --no-fund
-npm install --prefix frontend --ignore-scripts --no-audit --no-fund
-```
-
-The `--ignore-scripts` option prevents package lifecycle scripts from running during installation. The `--no-audit` and `--no-fund` options avoid additional npm audit and funding requests during setup.
-
-Do not run an unfamiliar install command or add a package unless you have reviewed its name and purpose.
-
-## 8. Start The Application
-
-Make sure MongoDB is running, then open PowerShell in the project root:
-
-```powershell
-npm run dev
-```
-
-This starts both servers:
-
-- Frontend: `http://localhost:5173`
-- Backend API: `http://localhost:5000`
-
-Open `http://localhost:5173` in a browser. Keep the terminal open while using the application. Press `Ctrl+C` in the terminal to stop the development servers.
-
-If you prefer to run each server separately, open two PowerShell windows:
-
-```powershell
+*(Optional) To run backend and frontend separately:*
+```bash
+# Terminal 1 - Backend
 npm run dev --prefix backend
-```
 
-```powershell
+# Terminal 2 - Frontend
 npm run dev --prefix frontend
 ```
 
-## 9. Demo Login Accounts
+---
 
-When the backend connects to an empty database for the first time, it creates demonstration records:
+## 6. Environment Configuration
 
-| Role | Email | Password |
+The backend reads configuration from `backend/.env`.
+
+Default configuration:
+```env
+PORT=5000
+MONGO_URI=mongodb://127.0.0.1:27017/vendor-management
+JWT_SECRET=super-secret-jwt-key-for-vendom-system-2025
+CLIENT_URL=http://localhost:5173
+```
+
+- `PORT`: Express server listening port (default: `5000`).
+- `MONGO_URI`: MongoDB connection string. If unreachable, the server falls back to `mongodb-memory-server`.
+- `JWT_SECRET`: Secret key used for signing JSON Web Tokens.
+- `CLIENT_URL`: Allowed CORS origin for frontend communication.
+
+---
+
+## 7. Default Demo Accounts
+
+When the system initializes for the first time, it automatically creates sample accounts:
+
+| Role | Email Address | Password | Permissions |
+|---|---|---|---|
+| **System Administrator** | `admin@vendom.com` | `admin123` | Full access to all modules, orders, vendors, contracts, invoices, and users |
+| **Vendor User** | `vendor@northstar.test` | `vendor123` | Scoped access to Northstar Supplies' products and orders |
+| **Vendor User 2** | `tech@bluepeak.test` | `vendor123` | Scoped access to BluePeak Technologies' catalog and orders |
+
+---
+
+## 8. System Workflow & User Roles
+
+### Administrator Workflow:
+1. **Login:** Authenticate with `admin@vendom.com` / `admin123`.
+2. **Review Metrics:** View dashboard analytics, spend summaries, and system activity logs.
+3. **Onboard Vendors:** Add new vendors with GST, category, and contact details.
+4. **Approve Contracts & Orders:** Create contracts, track order progress through each stage, and generate invoices.
+5. **Rate Performance:** Update vendor scorecards across quality, delivery, and compliance.
+
+### Vendor Portal Workflow:
+1. **Login:** Authenticate with `vendor@northstar.test` / `vendor123`.
+2. **Catalog Management:** Add and update products/services offered by the vendor.
+3. **Order Fulfillment:** Review incoming purchase orders and update statuses (*In Progress*, *Completed*).
+4. **Restricted Privacy:** Vendor cannot view or modify data belonging to other vendors.
+
+---
+
+## 9. API Reference
+
+All API routes require `Authorization: Bearer <token>` header except public authentication routes.
+
+### Authentication (`/api/auth`)
+- `POST /api/auth/login` — Authenticate user and receive JWT token.
+- `GET /api/auth/me` — Fetch currently logged-in user profile.
+
+### Dashboard (`/api/dashboard`)
+- `GET /api/dashboard` — Fetch aggregate stats, order counts, and category breakdowns.
+- `POST /api/dashboard/reset-demo` — Reset and re-seed the demo database *(Admin only)*.
+
+### Vendors (`/api/vendors`)
+- `GET /api/vendors` — List all vendors (supports `?search=`, `?status=`, `?category=`).
+- `GET /api/vendors/:id` — Get vendor profile by ID.
+- `POST /api/vendors` — Create a new vendor record *(Admin)*.
+- `PUT /api/vendors/:id` — Update vendor information.
+- `PUT /api/vendors/:id/ratings` — Update 6-metric rating scorecard *(Admin)*.
+- `PATCH /api/vendors/:id/status` — Toggle vendor status (*Active* / *Inactive*).
+- `DELETE /api/vendors/:id` — Delete vendor *(Admin)*.
+
+### Products & Services (`/api/products`)
+- `GET /api/products` — Retrieve all products/services.
+- `POST /api/products` — Create a new product.
+- `PUT /api/products/:id` — Update product details and inventory.
+- `DELETE /api/products/:id` — Delete product.
+
+### Purchase Orders (`/api/orders`)
+- `GET /api/orders` — List purchase orders.
+- `GET /api/orders/:id` — Get detailed purchase order.
+- `POST /api/orders` — Create new purchase order *(Admin)*.
+- `PATCH /api/orders/:id/status` — Advance order status (*Pending*, *Approved*, *In Progress*, *Completed*, *Cancelled*).
+- `DELETE /api/orders/:id` — Remove order *(Admin)*.
+
+### Contracts (`/api/contracts`)
+- `GET /api/contracts` — List all vendor contracts.
+- `POST /api/contracts` — Register a new contract *(Admin)*.
+- `PUT /api/contracts/:id` — Update contract terms and values *(Admin)*.
+- `PATCH /api/contracts/:id/status` — Change contract status *(Active, Expired, Terminated)*.
+- `DELETE /api/contracts/:id` — Delete contract *(Admin)*.
+
+### Invoices (`/api/invoices`)
+- `GET /api/invoices` — List all invoices.
+- `POST /api/invoices` — Issue new invoice *(Admin)*.
+- `PUT /api/invoices/:id` — Update invoice information.
+- `PATCH /api/invoices/:id/status` — Update payment status (*Pending*, *Paid*, *Overdue*).
+- `DELETE /api/invoices/:id` — Delete invoice *(Admin)*.
+
+### Users & Audit (`/api/users`, `/api/activities`)
+- `GET /api/users` — List system user accounts *(Admin)*.
+- `POST /api/users` — Create user account *(Admin)*.
+- `DELETE /api/users/:id` — Remove user account *(Admin)*.
+- `GET /api/activities` — Fetch recent system audit trail.
+
+---
+
+## 10. Data Models & Schemas
+
+```mermaid
+erDiagram
+    USER ||--o{ VENDOR : "manages (if vendor role)"
+    VENDOR ||--o{ PRODUCT : "provides"
+    VENDOR ||--o{ ORDER : "receives"
+    VENDOR ||--o{ CONTRACT : "signs"
+    VENDOR ||--o{ INVOICE : "bills"
+    ORDER ||--o{ PRODUCT : "contains items"
+    ORDER ||--o{ INVOICE : "referenced by"
+    ACTIVITY }|..|| USER : "logged for"
+
+    VENDOR {
+        string vendorId PK
+        string vendorName
+        string companyName
+        string email
+        string phone
+        string gstNumber
+        string category
+        string status "Active | Inactive | Pending"
+        number rating
+        object ratings "quality, delivery, pricing, etc."
+    }
+
+    PRODUCT {
+        string name
+        ObjectId vendor FK
+        string category
+        number price
+        number quantity
+    }
+
+    ORDER {
+        string orderNumber PK
+        ObjectId vendor FK
+        array items
+        number totalAmount
+        string status "Pending | Approved | In Progress | Completed | Cancelled"
+        date orderDate
+    }
+
+    CONTRACT {
+        string contractNumber PK
+        ObjectId vendor FK
+        string title
+        number value
+        date startDate
+        date endDate
+        string status "Active | Expired | Pending"
+    }
+
+    INVOICE {
+        string invoiceNumber PK
+        ObjectId vendor FK
+        ObjectId order FK
+        number amount
+        date dueDate
+        string status "Pending | Paid | Overdue"
+    }
+```
+
+---
+
+## 11. Common Troubleshooting
+
+| Issue | Cause | Resolution |
 |---|---|---|
-| Admin | `admin@vendom.com` | `admin123` |
-| Vendor | `vendor@northstar.test` | `vendor123` |
+| **EADDRINUSE: port 5000 or 5173** | Another server is already running on port 5000 or 5173 | Stop existing node processes or terminate them using Task Manager / PowerShell (`Get-Process node \| Stop-Process`). |
+| **Local MongoDB not connected** | MongoDB service is stopped or not installed | No action required! The application automatically boots an embedded in-memory MongoDB server. If you prefer persistent local data, start the service with `Start-Service MongoDB`. |
+| **CORS Error in Browser** | Backend origin mismatch | Confirm `CLIENT_URL=http://localhost:5173` is set in `backend/.env`. |
+| **Invalid Login Credentials** | Using non-demo credentials | Use `admin@vendom.com` / `admin123` or click **Reset Demo Data** from the admin dashboard. |
+| **Cannot Create Order for Vendor** | Vendor is marked Inactive | Change vendor status to **Active** before creating a purchase order. |
 
-Use the admin account to demonstrate the complete system. Use the vendor account to demonstrate vendor-specific permissions.
+---
 
-These credentials are only for local classroom demonstration. Do not use them in a public or shared deployment.
+## License
 
-## 10. Suggested Demonstration Flow
-
-1. Log in as the admin.
-2. Open the dashboard and review the summary cards.
-3. Open **Vendors** and add a vendor.
-4. Use the search box and status filter to find vendors.
-5. Select a vendor name to view its profile.
-6. Open **Products & services** and add a product for an active vendor.
-7. Search for the product and edit its quantity or price.
-8. Open **Orders** and create or review an order through the API-backed workflow.
-9. Change an order from `Pending` to `Approved`, `In Progress`, and finally `Completed`.
-10. Deactivate a vendor and verify that new orders for that vendor are rejected.
-11. Log out and sign in with the vendor account.
-12. Confirm that the vendor can see only its own products and orders.
-
-## 11. API Overview
-
-All API routes are prefixed with `http://localhost:5000/api`. Protected routes require a JWT token in the request header.
-
-### Authentication
-
-```text
-POST /api/auth/login
-GET  /api/auth/me
-```
-
-### Dashboard
-
-```text
-GET /api/dashboard
-```
-
-Returns total vendors, active vendors, products, orders, and pending orders.
-
-### Vendors
-
-```text
-GET    /api/vendors
-GET    /api/vendors/:id
-POST   /api/vendors
-PUT    /api/vendors/:id
-PATCH  /api/vendors/:id/status
-DELETE /api/vendors/:id
-```
-
-### Products and services
-
-```text
-GET    /api/products
-POST   /api/products
-PUT    /api/products/:id
-DELETE /api/products/:id
-```
-
-### Orders
-
-```text
-GET   /api/orders
-GET   /api/orders/:id
-POST  /api/orders
-PATCH /api/orders/:id/status
-```
-
-The browser communicates with these REST endpoints through `frontend/src/services/api.js`. Operational data is stored in MongoDB rather than hardcoded in the frontend.
-
-## 12. Order Statuses
-
-Orders use these statuses:
-
-- `Pending`: the order has been submitted and needs review.
-- `Approved`: the order has been accepted.
-- `In Progress`: the vendor is working on the order.
-- `Completed`: the order has been fulfilled.
-- `Cancelled`: the order will not be fulfilled.
-
-When an admin creates an order, the backend checks that the vendor is active and that enough product quantity is available.
-
-## 13. Production Build
-
-To create a production build of the frontend:
-
-```powershell
-npm run build --prefix frontend
-```
-
-The compiled files are written to `frontend/dist`. The development server is still the simplest way to demonstrate the project locally.
-
-## 14. Common Problems
-
-### `MongoDB connection failed`
-
-MongoDB is not running, the connection string is incorrect, or the MongoDB service is not installed. Start the service and check `backend/.env`.
-
-### `EADDRINUSE: address already in use`
-
-Another program is already using port `5000` or `5173`. Stop the other development server, or change the matching port configuration.
-
-### The browser shows a network error
-
-Check that both the backend and frontend terminals are running. The API should be available at `http://localhost:5000/api/health`, which should return a small JSON response with `status: "ok"`.
-
-### Login does not work
-
-Confirm that MongoDB was running when the backend started. Check the backend terminal for errors and use the exact demo credentials from this README.
-
-### No records appear
-
-The frontend reads from MongoDB through the backend. Confirm that the backend is connected and that you are using the correct role. A new database starts mostly empty apart from the demonstration records.
-
-## 15. Security Notes
-
-- Passwords are hashed with bcryptjs before storage.
-- Protected endpoints require JWT authentication.
-- Admin and vendor permissions are checked by backend middleware.
-- Vendor users are restricted to their own products, profile, and orders.
-- `.env` and `node_modules` are excluded from version control.
-- The demonstration credentials and JWT secret must be changed before any shared or public deployment.
+This project is open-source and available under the [MIT License](LICENSE).
