@@ -416,7 +416,7 @@ let invoices = rawInvoiceConfigs.map((cfg, idx) => {
   };
 });
 
-const products = [
+let products = [
   { _id: 'p-01', productId: 'PRD-101', name: 'Office Stationery Package', category: 'Office Supplies', price: 8500, quantity: 120, vendor: vendors[0], status: 'Available' },
   { _id: 'p-02', productId: 'PRD-102', name: 'Laptop Maintenance Service', category: 'IT Services', price: 18500, quantity: 45, vendor: vendors[1], status: 'Available' },
   { _id: 'p-03', productId: 'PRD-103', name: 'Cloud Hosting & Storage SLA', category: 'Cloud Services', price: 45000, quantity: 60, vendor: vendors[9], status: 'Available' },
@@ -505,6 +505,15 @@ let users = [
     createdAt: '2024-02-12T00:00:00.000Z'
   }
 ];
+
+// Snapshot initial demo records for reset-demo capability
+const initialVendors = JSON.parse(JSON.stringify(vendors));
+const initialContracts = JSON.parse(JSON.stringify(contracts));
+const initialOrders = JSON.parse(JSON.stringify(orders));
+const initialInvoices = JSON.parse(JSON.stringify(invoices));
+const initialProducts = JSON.parse(JSON.stringify(products));
+const initialActivities = JSON.parse(JSON.stringify(activities));
+const initialUsers = JSON.parse(JSON.stringify(users));
 
 // Health check
 router.get('/health', (_req, res) => res.json({ status: 'ok', serverless: true, timestamp: new Date().toISOString() }));
@@ -676,17 +685,37 @@ router.get('/dashboard', (_req, res) => {
   });
 });
 
+router.post('/dashboard/reset-demo', (_req, res) => {
+  vendors = JSON.parse(JSON.stringify(initialVendors));
+  contracts = JSON.parse(JSON.stringify(initialContracts));
+  orders = JSON.parse(JSON.stringify(initialOrders));
+  invoices = JSON.parse(JSON.stringify(initialInvoices));
+  products = JSON.parse(JSON.stringify(initialProducts));
+  activities = JSON.parse(JSON.stringify(initialActivities));
+  users = JSON.parse(JSON.stringify(initialUsers));
+  res.json({ success: true, message: 'Demo data reset successfully' });
+});
+
 // Vendors
 router.get('/vendors', (req, res) => {
   let result = [...vendors];
   const { search, category, status } = req.query;
   if (search) {
     const q = search.toLowerCase();
-    result = result.filter((v) => (v.vendorName || '').toLowerCase().includes(q) || (v.vendorId || '').toLowerCase().includes(q));
+    result = result.filter((v) => (v.vendorName || '').toLowerCase().includes(q) || (v.vendorId || '').toLowerCase().includes(q) || (v.companyName || '').toLowerCase().includes(q));
   }
   if (category && category !== 'All') result = result.filter((v) => v.category === category);
   if (status && status !== 'All') result = result.filter((v) => v.status === status);
   res.json(result);
+});
+
+router.get('/vendors/:id', (req, res) => {
+  const vendor = vendors.find((v) => v._id === req.params.id || v.vendorId === req.params.id);
+  if (!vendor) return res.status(404).json({ message: 'Vendor not found' });
+  const vProducts = products.filter((p) => p.vendor === vendor._id || p.vendor?._id === vendor._id || p.vendor?.vendorId === vendor.vendorId);
+  const vOrders = orders.filter((o) => o.vendor === vendor._id || o.vendor?._id === vendor._id || o.vendor?.vendorId === vendor.vendorId);
+  const vContracts = contracts.filter((c) => c.vendor === vendor._id || c.vendor?._id === vendor._id || c.vendor?.vendorId === vendor.vendorId);
+  res.json({ vendor, products: vProducts, orders: vOrders, contracts: vContracts });
 });
 
 router.post('/vendors', (req, res) => {
@@ -710,13 +739,54 @@ router.put('/vendors/:id', (req, res) => {
   res.status(404).json({ message: 'Vendor not found' });
 });
 
+router.patch('/vendors/:id/status', (req, res) => {
+  const idx = vendors.findIndex((v) => v._id === req.params.id || v.vendorId === req.params.id);
+  if (idx !== -1) {
+    vendors[idx].status = req.body.status;
+    return res.json(vendors[idx]);
+  }
+  res.status(404).json({ message: 'Vendor not found' });
+});
+
+router.put('/vendors/:id/ratings', (req, res) => {
+  const idx = vendors.findIndex((v) => v._id === req.params.id || v.vendorId === req.params.id);
+  if (idx !== -1) {
+    const { quality, delivery, pricing, communication, reliability, compliance } = req.body;
+    const ratings = {
+      quality: Number(quality) || 4.5,
+      delivery: Number(delivery) || 4.5,
+      pricing: Number(pricing) || 4.0,
+      communication: Number(communication) || 4.5,
+      reliability: Number(reliability) || 4.5,
+      compliance: Number(compliance) || 4.5
+    };
+    const overallRating = Number(
+      ((ratings.quality + ratings.delivery + ratings.pricing + ratings.communication + ratings.reliability + ratings.compliance) / 6).toFixed(1)
+    );
+    vendors[idx].ratings = ratings;
+    vendors[idx].rating = overallRating;
+    return res.json(vendors[idx]);
+  }
+  res.status(404).json({ message: 'Vendor not found' });
+});
+
 router.delete('/vendors/:id', (req, res) => {
   vendors = vendors.filter((v) => v._id !== req.params.id && v.vendorId !== req.params.id);
   res.json({ success: true });
 });
 
 // Contracts
-router.get('/contracts', (_req, res) => res.json(contracts));
+router.get('/contracts', (req, res) => {
+  let result = [...contracts];
+  const { search, status } = req.query;
+  if (search) {
+    const q = search.toLowerCase();
+    result = result.filter((c) => (c.contractNumber || '').toLowerCase().includes(q) || (c.title || '').toLowerCase().includes(q) || (c.vendorName || '').toLowerCase().includes(q));
+  }
+  if (status && status !== 'All') result = result.filter((c) => c.status === status);
+  res.json(result);
+});
+
 router.post('/contracts', (req, res) => {
   const newC = {
     _id: 'cnt-' + Date.now(),
@@ -728,8 +798,32 @@ router.post('/contracts', (req, res) => {
   res.status(201).json(newC);
 });
 
+router.put('/contracts/:id', (req, res) => {
+  const idx = contracts.findIndex((c) => c._id === req.params.id || c.contractNumber === req.params.id);
+  if (idx !== -1) {
+    contracts[idx] = { ...contracts[idx], ...req.body };
+    return res.json(contracts[idx]);
+  }
+  res.status(404).json({ message: 'Contract not found' });
+});
+
+router.delete('/contracts/:id', (req, res) => {
+  contracts = contracts.filter((c) => c._id !== req.params.id && c.contractNumber !== req.params.id);
+  res.json({ success: true });
+});
+
 // Orders
-router.get('/orders', (_req, res) => res.json(orders));
+router.get('/orders', (req, res) => {
+  let result = [...orders];
+  const { search, status } = req.query;
+  if (search) {
+    const q = search.toLowerCase();
+    result = result.filter((o) => (o.orderNumber || o.orderId || '').toLowerCase().includes(q) || (o.vendorName || '').toLowerCase().includes(q));
+  }
+  if (status && status !== 'All') result = result.filter((o) => o.status === status);
+  res.json(result);
+});
+
 router.post('/orders', (req, res) => {
   const newO = {
     _id: 'ord-' + Date.now(),
@@ -740,6 +834,20 @@ router.post('/orders', (req, res) => {
   };
   orders.unshift(newO);
   res.status(201).json(newO);
+});
+
+router.patch('/orders/:id/status', (req, res) => {
+  const idx = orders.findIndex((o) => o._id === req.params.id || o.orderNumber === req.params.id || o.orderId === req.params.id);
+  if (idx !== -1) {
+    orders[idx].status = req.body.status;
+    return res.json(orders[idx]);
+  }
+  res.status(404).json({ message: 'Order not found' });
+});
+
+router.delete('/orders/:id', (req, res) => {
+  orders = orders.filter((o) => o._id !== req.params.id && o.orderNumber !== req.params.id && o.orderId !== req.params.id);
+  res.json({ success: true });
 });
 
 // Invoices
@@ -817,7 +925,41 @@ router.delete('/invoices/:id', (req, res) => {
 });
 
 // Products & Activities
-router.get('/products', (_req, res) => res.json(products));
+router.get('/products', (req, res) => {
+  let result = [...products];
+  const { search } = req.query;
+  if (search) {
+    const q = search.toLowerCase();
+    result = result.filter((p) => (p.name || '').toLowerCase().includes(q) || (p.productId || '').toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q));
+  }
+  res.json(result);
+});
+
+router.post('/products', (req, res) => {
+  const newP = {
+    _id: 'prd-' + Date.now(),
+    productId: req.body.productId || `PRD-${100 + products.length + 1}`,
+    status: req.body.status || 'Available',
+    ...req.body
+  };
+  products.unshift(newP);
+  res.status(201).json(newP);
+});
+
+router.put('/products/:id', (req, res) => {
+  const idx = products.findIndex((p) => p._id === req.params.id || p.productId === req.params.id);
+  if (idx !== -1) {
+    products[idx] = { ...products[idx], ...req.body };
+    return res.json(products[idx]);
+  }
+  res.status(404).json({ message: 'Product not found' });
+});
+
+router.delete('/products/:id', (req, res) => {
+  products = products.filter((p) => p._id !== req.params.id && p.productId !== req.params.id);
+  res.json({ success: true });
+});
+
 router.get('/activities', (_req, res) => res.json(activities));
 
 // Users
